@@ -248,14 +248,15 @@ namespace UcbBack.Controllers
             string query = null;
             switch (process.FileType)
             {
+                //el query se hizo de forma estática con el nombre de BD "ADMNALRRHHOLD", se cambio por "ADMNALRRHH_PRUEBA"
                 case ServProcess.Serv_FileType.Varios:
                     query =
                         "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
                         " sv.\"ContractObjective\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Varios\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " from \"ADMNALRRHH_PRUEBA\".\"Serv_Varios\" sv " +
+                        " inner join \"ADMNALRRHH_PRUEBA\".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join \"ADMNALRRHH_PRUEBA\".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where \"Serv_ProcessId\" = " + process.Id +
                         " order by sv.\"Id\" asc;";
@@ -265,10 +266,10 @@ namespace UcbBack.Controllers
                     query =
                         "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
                         " sv.\"AssignedJob\"||\' \'||sv.\"Carrera\"||\' \'||sv.\"Student\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Carrera\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " from \"ADMNALRRHH_PRUEBA\".\"Serv_Carrera\" sv " +
+                        " inner join \"ADMNALRRHH_PRUEBA\".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join \"ADMNALRRHH_PRUEBA\".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\"" +
                         " where \"Serv_ProcessId\" = " + process.Id +
                         " order by sv.\"Id\" asc;";
@@ -278,10 +279,10 @@ namespace UcbBack.Controllers
                     query =
                         "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
                         " sv.\"ProjectSAPName\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Proyectos\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " from \"ADMNALRRHH_PRUEBA\".\"Serv_Proyectos\" sv " +
+                        " inner join \"ADMNALRRHH_PRUEBA\".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join \"ADMNALRRHH_PRUEBA\".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\"" +
                         " where \"Serv_ProcessId\" = " + process.Id +
                         " order by sv.\"Id\" asc;";
@@ -291,10 +292,10 @@ namespace UcbBack.Controllers
                     query =
                         "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
                         " sv.\"Sigla\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " from \"ADMNALRRHH_PRUEBA\".\"Serv_Paralelo\" sv " +
+                        " inner join \"ADMNALRRHH_PRUEBA\".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join \"ADMNALRRHH_PRUEBA\".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\"" +
                         " where \"Serv_ProcessId\" = " + process.Id +
                         " order by sv.\"Id\" asc;";
