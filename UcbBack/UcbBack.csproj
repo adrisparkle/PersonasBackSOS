@@ -64,7 +64,7 @@
     <Reference Include="Sap.Data.Hana.v4.5, Version=1.0.120.0, Culture=neutral, PublicKeyToken=0326b8ea63db4bc4, processorArchitecture=MSIL" />
     <Reference Include="SAPBusinessOneSDK, Version=1.0.0.1, Culture=neutral, PublicKeyToken=c7c3cb60e45d119f, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Windows\Microsoft.NET\assembly\GAC_MSIL\SAPBusinessOneSDK\v4.0_1.0.0.1__c7c3cb60e45d119f\SAPBusinessOneSDK.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\SAP\SAP Business One\Lib\SAPBusinessOneSDK.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -297,6 +297,7 @@
     <Compile Include="Models\CauseOfMovement.cs" />
     <Compile Include="Models\ChangesLogs.cs" />
     <Compile Include="Models\Civil.cs" />
+    <Compile Include="Models\Not Mapped\PositionPerSubject.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_PregradoViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_ProyectosViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_ReemplazoViewModel.cs" />

@@ -216,7 +216,6 @@ C:\Users\Adrian Rojas\Desktop\dev\Ucb.Back.net\UcbBack\obj\Debug\UcbBack.Migrati
 C:\Users\Adrian Rojas\Desktop\dev\Ucb.Back.net\UcbBack\obj\Debug\UcbBack.csproj.GenerateResource.Cache
 C:\Users\Adrian Rojas\Desktop\dev\Ucb.Back.net\UcbBack\obj\Debug\UcbBack.dll
 C:\Users\Adrian Rojas\Desktop\dev\Ucb.Back.net\UcbBack\obj\Debug\UcbBack.pdb
-C:\Users\Juanpi\Desktop\dev\UcbBack.net\UcbBack\obj\Debug\UcbBack.csprojResolveAssemblyReference.cache
 C:\Users\Juanpi\Desktop\dev\UcbBack.net\UcbBack\obj\Debug\UcbBack.Migrations.FirstMigration.resources
 C:\Users\Juanpi\Desktop\dev\UcbBack.net\UcbBack\obj\Debug\UcbBack.csproj.GenerateResource.Cache
 C:\Users\Juanpi\Desktop\dev\UcbBack.net\UcbBack\bin\UcbBack.dll.config
@@ -291,3 +290,4 @@ C:\Users\Juanpi\Desktop\dev\UcbBack.net\UcbBack\bin\Microsoft.Owin.Security.Micr
 C:\Users\Juanpi\Desktop\dev\UcbBack.net\UcbBack\bin\System.Web.Http.Owin.xml
 C:\Users\Juanpi\Desktop\dev\UcbBack.net\UcbBack\obj\Debug\UcbBack.dll
 C:\Users\Juanpi\Desktop\dev\UcbBack.net\UcbBack\obj\Debug\UcbBack.pdb
+C:\Users\Juanpi\Desktop\dev\UcbBack.net\UcbBack\obj\Debug\UcbBack.csprojResolveAssemblyReference.cache
