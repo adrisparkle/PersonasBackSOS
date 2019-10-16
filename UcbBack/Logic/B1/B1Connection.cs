@@ -190,7 +190,7 @@ namespace UcbBack.Logic.B1
             return log;
         }
 
-        public string updatePersonToEmployeeMasterData(int UserId, People person)
+        public string updatePersonToEmployeeMasterData(int UserId, People person, string position)
         {
             var log = initLog(UserId, BusinessObjectType.Employee, person.Id.ToString());
             try
@@ -211,6 +211,8 @@ namespace UcbBack.Logic.B1
                     oEmployeesInfo.IdNumber = person.Document;
                     //oEmployeesInfo.Department = Int32.Parse(person.GetLastContract().Dependency.Cod);
                     oEmployeesInfo.Active = BoYesNoEnum.tYES;
+                    // set Job Title
+                    oEmployeesInfo.JobTitle = position;
 
                     // set Branch Code
 
@@ -285,7 +287,7 @@ namespace UcbBack.Logic.B1
             }
         }
 
-        public string addPersonToEmployeeMasterData(int UserId, People person)
+        public string addPersonToEmployeeMasterData(int UserId, People person, string position)
         {
             var log = initLog(UserId, BusinessObjectType.Employee, person.Id.ToString());
             try
@@ -306,7 +308,8 @@ namespace UcbBack.Logic.B1
                     var ou = person.GetLastContract();
                     oEmployeesInfo.UserFields.Fields.Item("U_UnidadOrg").Value = ou.Dependency.OrganizationalUnit.Cod;
                     oEmployeesInfo.UserFields.Fields.Item("U_Cod_SN").Value = "R" + person.CUNI;
-
+                    // set Job Title
+                    oEmployeesInfo.JobTitle = position;
                     // set Branch Code
                     oEmployeesInfo.EmployeeBranchAssignment.BPLID = Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
                     oEmployeesInfo.EmployeeBranchAssignment.Add();
@@ -839,24 +842,24 @@ namespace UcbBack.Logic.B1
             return res.Count() > 0;
         }
 
-        public string AddOrUpdatePerson(int UserId, People person, bool update = true)
+        public string AddOrUpdatePerson(int UserId, People person, string position, bool update = true)
         {
             string res = "";
             res = AddOrUpdatePersonToBusinessPartner(UserId, person, update: update);
-            res += AddOrUpdatePersonToRRHH(UserId, person, update: update);
+            res += AddOrUpdatePersonToRRHH(UserId, person, position, update: update);
             res += AddOrUpdatePersonToBusinessPartnerSUPPLIER(UserId, person, update: update);
             return res;
         }
 
-        public string AddOrUpdatePersonToRRHH(int UserId, People person, bool update = true)
+        public string AddOrUpdatePersonToRRHH(int UserId, People person, string position, bool update = true)
         {
             if (!PersonExistsAsRRHH(person))
             {
-                return addPersonToEmployeeMasterData(UserId, person);
+                return addPersonToEmployeeMasterData(UserId, person, position);
             }
             else if (update)
             {
-                return updatePersonToEmployeeMasterData(UserId, person);
+                return updatePersonToEmployeeMasterData(UserId, person, position);
             }
             else return "Exist not created";
         }
@@ -1177,7 +1180,6 @@ namespace UcbBack.Logic.B1
 
                 // If process Date is null set last day of the month in proccess
                 DateTime date = process.InSAPAt == null ? DateTime.Now : process.InSAPAt.Value;
-
                 if (approved)
                 {
                     SAPbobsCOM.JournalEntries businessObject =
@@ -1187,7 +1189,8 @@ namespace UcbBack.Logic.B1
                     // add header Journal Entrie Approved:
                     businessObject.ReferenceDate = date;
 
-                    businessObject.Memo = CleanAndTrunk(voucher.FirstOrDefault().Memo, 49);
+                    //businessObject.Memo = CleanAndTrunk(voucher.FirstOrDefault().Memo, 49); ya no se usará. Se conserva xceacaso
+                    businessObject.Memo = voucher.FirstOrDefault().Memo;
                     businessObject.TaxDate = date;
                     businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
                     businessObject.DueDate = date;
@@ -1197,8 +1200,9 @@ namespace UcbBack.Logic.B1
                     businessObject.Lines.SetCurrentLine(0);
                     foreach (var line in voucher)
                     {
-                        // var xx = CleanAndTrunk(line.LineMemo,49);
-                        businessObject.Lines.LineMemo = CleanAndTrunk(line.LineMemo, 49);
+                        // var xx = CleanAndTrunk(line.LineMemo,49); comentado adrian
+                        businessObject.Lines.LineMemo = line.LineMemo;
+                        //businessObject.Lines.LineMemo = CleanAndTrunk(line.LineMemo, 49); ya no se usará. Se conserva xceacaso
                         businessObject.Lines.AccountCode = this.getAccountId(line.Account);
                         businessObject.Lines.Credit = (double)line.Credit;
                         businessObject.Lines.Debit = (double)line.Debit;

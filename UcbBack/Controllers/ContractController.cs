@@ -332,8 +332,10 @@ namespace UcbBack.Controllers
 
                 var user = auth.getUser(Request);
 
+                //se obtiene el nombre de la posición del contrato que se está registrando en el controlador
+                string contractPosition = _context.Position.FirstOrDefault(x => x.Id == contract.PositionsId).NameAbr;
                 // create user in SAP
-                B1.AddOrUpdatePerson(user.Id, person);
+                B1.AddOrUpdatePerson(user.Id, person, contractPosition);
 
                 return Created(new Uri(Request.RequestUri + "/" + contract.Id), contract);
             }
@@ -426,12 +428,16 @@ namespace UcbBack.Controllers
             contractInDB.Respaldo = contract.Respaldo;
             contractInDB.Comunicado = contract.Comunicado;
             contractInDB.UpdatedAt = DateTime.Now;
+            contractInDB.EndDateNombramiento = contract.EndDateNombramiento;
 
             var person = _context.Person.FirstOrDefault(x => x.CUNI == contractInDB.CUNI);
 
             var user = auth.getUser(Request);
+
+            //se obtiene el nombre de la posición del contrato que se está registrando en el controlador
+            string contractPosition = _context.Position.FirstOrDefault(x => x.Id == contract.PositionsId).NameAbr;
             // create user in SAP
-            B1.AddOrUpdatePerson(user.Id, person);
+            B1.AddOrUpdatePerson(user.Id, person, contractPosition);
 
             _context.SaveChanges();
             return Ok(contractInDB);
