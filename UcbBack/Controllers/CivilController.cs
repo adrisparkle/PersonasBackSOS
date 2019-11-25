@@ -93,7 +93,8 @@ namespace UcbBack.Controllers
                             " where ocrd.\"validFor\" = \'Y\'" +
                             " and crd8.\"DisabledBP\" = \'N\') ocrd" +
                             " on c.\"SAPId\" = ocrd.\"CardCode\"" +
-                            " where ocrd.\"BranchesId\" in (" + StrIds + ");";
+                            " where ocrd.\"BranchesId\" in (" + StrIds + ")"+
+                            " order by c.\"Id\";";
                 var rawresult = _context.Database.SqlQuery<Civil>(query);
                 var res = auth.filerByRegional(rawresult.AsQueryable(), user);
                 return Ok(res);
@@ -148,8 +149,8 @@ namespace UcbBack.Controllers
         {
             var user = auth.getUser(Request);
 
-
-            var BP = Civil.findBPInSAP(civil.SAPId, user,_context);
+            //La búsqueda devolverá usuarios según la regional del usuario que haga la búsqueda
+            var BP = Civil.findBPInSAP(civil.SAPId, user, _context);
 
             if (!ModelState.IsValid)
                 return BadRequest();
@@ -158,7 +159,7 @@ namespace UcbBack.Controllers
 
             if (BP == null)
                 return Unauthorized();
-            var a =AD.getUserBranches(user).Select(x => x.Id);
+            var a = AD.getUserBranches(user).Select(x => x.Id);
             var b = BP.Select(x => x.BranchesId);
 
             if (!a.Intersect(b).Any())
@@ -171,8 +172,12 @@ namespace UcbBack.Controllers
                 //return Ok("Este Socio de Negocios ya existe como Civil.");
                 return Conflict();
 
+            //Devuelve 1er Branch que tiene el usuario al que se le da el alta. Join con tabla crd8 de SAP y branches
+            var newBranchBP = b.FirstOrDefault();
+            civil.BranchesId = newBranchBP;
             civil.Id = Civil.GetNextId(_context);
             civil.CreatedBy = user.Id;
+            //Guarda en la tabla Civil de PERSONAS
             _context.Civils.Add(civil);
             _context.SaveChanges();
 
