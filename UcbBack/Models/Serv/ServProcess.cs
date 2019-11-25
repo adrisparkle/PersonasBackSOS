@@ -60,17 +60,17 @@ namespace UcbBack.Models.Serv
                         " sv.\"ServiceName\" as \"Memo\", sv.\"ContractObjective\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\",  " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"TotalAmount\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"TotalAmount\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Varios\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                        " from "+CustomSchema.Schema+".\"Serv_Varios\" sv " +
+                        " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                         " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                        " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                         " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                        " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                         " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                         " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'PPAGAR\' " +
@@ -81,17 +81,17 @@ namespace UcbBack.Models.Serv
                         " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"ContractAmount\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"ContractAmount\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Varios\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                        " from "+CustomSchema.Schema+".\"Serv_Varios\" sv " +
+                        " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                         " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                        " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                         " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                        " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                         " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                         " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'CONTRATO\' " +
@@ -102,17 +102,17 @@ namespace UcbBack.Models.Serv
                         " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IT\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IT\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Varios\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                        " from "+CustomSchema.Schema+".\"Serv_Varios\" sv " +
+                        " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                         " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                        " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                         " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                        " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                         " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                         " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'IT\' " +
@@ -123,17 +123,17 @@ namespace UcbBack.Models.Serv
                         " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IUE\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IUE\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Varios\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                        " from "+CustomSchema.Schema+".\"Serv_Varios\" sv " +
+                        " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                         " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                        " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                         " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                        " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                         " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                         " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'IUE\' " +
@@ -145,17 +145,17 @@ namespace UcbBack.Models.Serv
                         " sv.\"ServiceName\" as \"Memo\", sv.\"AssignedJob\"||\' \'||sv.\"Carrera\"||\' \'||sv.\"Student\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"TotalAmount\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"TotalAmount\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Carrera\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                        " from "+CustomSchema.Schema+".\"Serv_Carrera\" sv " +
+                        " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                         " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                        " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                         " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                        " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                         " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                         " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'PPAGAR\' " +
@@ -166,17 +166,17 @@ namespace UcbBack.Models.Serv
                         " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"ContractAmount\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"ContractAmount\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Carrera\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                        " from "+CustomSchema.Schema+".\"Serv_Carrera\" sv " +
+                        " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                         " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                        " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                         " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                        " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                         " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                         " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'CONTRATO\' " +
@@ -187,17 +187,17 @@ namespace UcbBack.Models.Serv
                         " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IT\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IT\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Carrera\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                        " from "+CustomSchema.Schema+".\"Serv_Carrera\" sv " +
+                        " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                         " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                        " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                         " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                        " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                         " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                         " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'IT\' " +
@@ -208,17 +208,17 @@ namespace UcbBack.Models.Serv
                         " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IUE\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IUE\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Carrera\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                        " from "+CustomSchema.Schema+".\"Serv_Carrera\" sv " +
+                        " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                         " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                        " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                         " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                        " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                         " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                         " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'IUE\' " +
@@ -226,84 +226,84 @@ namespace UcbBack.Models.Serv
                     break;
                 case ServProcess.Serv_FileType.Proyectos:
                     query =
-                        "select sv.\"CardCode\",sv.\"CardName\", null as \"OU\",null \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", \'PY:\' || sv.\"ProjectSAPCode\" || \' \' || sv.\"ProjectSAPName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                        "select sv.\"CardCode\",sv.\"CardName\", null as \"OU\",null \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"ProjectCode\",  " +
+                        " sv.\"ServiceName\" as \"Memo\", sv.\"AssignedJob\" || \': \' || sv.\"ProjectSAPName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"TotalAmount\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"TotalAmount\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Proyectos\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                        " from "+CustomSchema.Schema+".\"Serv_Proyectos\" sv " +
+                        " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                         " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                        " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                         " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                        " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                         " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                         " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'PPAGAR\' " +
                         " and \"Serv_ProcessId\" = " + this.Id +
                         "  " +
                         " union all " +
-                        " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",null as \"Carrera\",sv.\"Periodo\" as \"Periodo\",\"ProjectSAPCode\" as \"Proyecto\",  " +
+                        " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",null as \"Carrera\",sv.\"Periodo\" as \"Periodo\",sv.\"ProjectSAPCode\" as \"ProjectCode\",  " +
                         " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"ContractAmount\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"ContractAmount\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Proyectos\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                        " from "+CustomSchema.Schema+".\"Serv_Proyectos\" sv " +
+                        " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                         " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                        " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                         " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                        " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                         " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                         " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'CONTRATO\' " +
                         " and \"Serv_ProcessId\" = " + this.Id +
                         "  " +
                         " union all " +
-                        " select null as \"CardCode\", sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                        " select null as \"CardCode\", sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"ProjectCode\",  " +
                         " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IT\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IT\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Proyectos\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                        " from "+CustomSchema.Schema+".\"Serv_Proyectos\" sv " +
+                        " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                         " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                        " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                         " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                        " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                         " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                         " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'IT\' " +
                         " and \"Serv_ProcessId\" = " + this.Id +
                         "  " +
                         " union all " +
-                        " select null as \"CardCode\", sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                        " select null as \"CardCode\", sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"ProjectCode\",  " +
                         " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IUE\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IUE\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Proyectos\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                        " from "+CustomSchema.Schema+".\"Serv_Proyectos\" sv " +
+                        " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                         " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                        " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                         " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                        " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                         " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                         " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'IUE\' " +
@@ -316,17 +316,17 @@ namespace UcbBack.Models.Serv
                     " sv.\"ServiceName\" as \"Memo\", sv.\"Sigla\" || \' \' || sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                     " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"TotalAmount\" else 0 end as \"Debit\", " +
                     " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"TotalAmount\"else 0 end as \"Credit\" " +
-                    " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
-                    " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                    " from "+CustomSchema.Schema+".\"Serv_Paralelo\" sv " +
+                    " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                     " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                    " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                     " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                    " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                     " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                     " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                    " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                     " on sv.\"DependencyId\" = d.\"Id\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                    " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                     " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                     " where gc.\"Id\">11 " +
                     " and \"Concept\" = \'PPAGAR\' " +
@@ -337,17 +337,17 @@ namespace UcbBack.Models.Serv
                     " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                     " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"ContractAmount\" else 0 end as \"Debit\", " +
                     " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"ContractAmount\"else 0 end as \"Credit\" " +
-                    " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
-                    " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                    " from "+CustomSchema.Schema+".\"Serv_Paralelo\" sv " +
+                    " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                     " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                    " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                     " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                    " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                     " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                     " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                    " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                     " on sv.\"DependencyId\" = d.\"Id\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                    " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                     " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                     " where gc.\"Id\">11 " +
                     " and \"Concept\" = \'CONTRATO\' " +
@@ -358,17 +358,17 @@ namespace UcbBack.Models.Serv
                     " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                     " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IT\" else 0 end as \"Debit\", " +
                     " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IT\"else 0 end as \"Credit\" " +
-                    " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
-                    " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                    " from "+CustomSchema.Schema+".\"Serv_Paralelo\" sv " +
+                    " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                     " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                    " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                     " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                    " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                     " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                     " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                    " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                     " on sv.\"DependencyId\" = d.\"Id\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                    " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                     " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                     " where gc.\"Id\">11 " +
                     " and \"Concept\" = \'IT\' " +
@@ -379,17 +379,17 @@ namespace UcbBack.Models.Serv
                     " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                     " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IUE\" else 0 end as \"Debit\", " +
                     " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IUE\"else 0 end as \"Credit\" " +
-                    " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
-                    " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                    " from "+CustomSchema.Schema+".\"Serv_Paralelo\" sv " +
+                    " inner join "+CustomSchema.Schema+".\"GrupoContable\" gc " +
                     " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                    " inner join "+CustomSchema.Schema+".\"CuentasContables\" cc " +
                     " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                    " inner join "+CustomSchema.Schema+".\"Serv_Process\" sp " +
                     " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
                     " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                    " inner join "+CustomSchema.Schema+".\"Dependency\" d " +
                     " on sv.\"DependencyId\" = d.\"Id\" " +
-                    " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                    " inner join "+CustomSchema.Schema+".\"OrganizationalUnit\" ou " +
                     " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                     " where gc.\"Id\">11 " +
                     " and \"Concept\" = \'IUE\' " +
