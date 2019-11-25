@@ -81,6 +81,44 @@ namespace UcbBack.Controllers
             return Ok(res2);
         }
 
+
+        [HttpGet]
+        [Route("api/ServContract/PendingApproval/")]
+        public IHttpActionResult PendingApproval()
+        {
+            var user = auth.getUser(Request);
+            var query = "select * from " + CustomSchema.Schema + ".\"Serv_Process\" " +
+                        " where \"State\" = '" + ServProcess.Serv_FileState.PendingApproval + "' " +
+                        " order by (" +
+                        "   case when \"State\" = '" + ServProcess.Serv_FileState.PendingApproval + "' then 1 " +
+                        " end) asc, " +
+                        " \"CreatedAt\" desc;";
+            var rawresult = _context.Database.SqlQuery<ServProcess>(query).ToList();
+
+            if (rawresult.Count() == 0)
+                return NotFound();
+
+            var res = auth.filerByRegional(rawresult.AsQueryable(), user).Cast<ServProcess>();
+
+            if (res.Count() == 0)
+                return Unauthorized();
+
+            var res2 = (from r in res
+                        join b in _context.Branch.ToList()
+                            on r.BranchesId equals b.Id
+                        select new
+                        {
+                            r.Id,
+                            r.BranchesId,
+                            Branches = b.Name,
+                            r.FileType,
+                            r.State,
+                            r.SAPId,
+                            CreatedAt = r.CreatedAt.ToString("dd MMMM yyyy HH:mm")
+                        }).ToList();
+            return Ok(res2);
+        }
+
         [HttpGet]
         [Route("api/ServContract/{id}")]
         public IHttpActionResult Get(int id)
@@ -161,6 +199,9 @@ namespace UcbBack.Controllers
                     || !((IDictionary<string, object>)o).ContainsKey("excelStream")
                     || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
+                    //escribir aquí los parámetros del excel que quiero ver||en qué parte del excel se manda eso y como es que el fonrtend sube la info del excel si solo pasa las branches , el nombre 'file' y el filetype CC_XXX
+                    var name = o.fileName;
+                    var branches = o.BranchesId;
                     response.StatusCode = HttpStatusCode.BadRequest;
                     response.Headers.Add("UploadErrors", "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
@@ -218,7 +259,7 @@ namespace UcbBack.Controllers
                 {
                     Console.WriteLine(e);
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP\"}");
+                    response.Headers.Add("UploadErrors", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con SAP\"}");
                     response.Content = new StringContent("Error conexion SAP");
                     return response;
                 }
@@ -253,10 +294,10 @@ namespace UcbBack.Controllers
                     query =
                         "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
                         " sv.\"ContractObjective\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
-                        " from \"ADMNALRRHH_PRUEBA\".\"Serv_Varios\" sv " +
-                        " inner join \"ADMNALRRHH_PRUEBA\".\"Dependency\" d " +
+                        " from " + CustomSchema.Schema + ".\"Serv_Varios\" sv " +
+                        " inner join " + CustomSchema.Schema + ".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHH_PRUEBA\".\"OrganizationalUnit\" ou " +
+                        " inner join " + CustomSchema.Schema + ".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where \"Serv_ProcessId\" = " + process.Id +
                         " order by sv.\"Id\" asc;";
@@ -266,10 +307,10 @@ namespace UcbBack.Controllers
                     query =
                         "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
                         " sv.\"AssignedJob\"||\' \'||sv.\"Carrera\"||\' \'||sv.\"Student\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
-                        " from \"ADMNALRRHH_PRUEBA\".\"Serv_Carrera\" sv " +
-                        " inner join \"ADMNALRRHH_PRUEBA\".\"Dependency\" d " +
+                        " from " + CustomSchema.Schema + ".\"Serv_Carrera\" sv " +
+                        " inner join " + CustomSchema.Schema + ".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHH_PRUEBA\".\"OrganizationalUnit\" ou " +
+                        " inner join " + CustomSchema.Schema + ".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\"" +
                         " where \"Serv_ProcessId\" = " + process.Id +
                         " order by sv.\"Id\" asc;";
@@ -279,10 +320,10 @@ namespace UcbBack.Controllers
                     query =
                         "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
                         " sv.\"ProjectSAPName\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
-                        " from \"ADMNALRRHH_PRUEBA\".\"Serv_Proyectos\" sv " +
-                        " inner join \"ADMNALRRHH_PRUEBA\".\"Dependency\" d " +
+                        " from " + CustomSchema.Schema + ".\"Serv_Proyectos\" sv " +
+                        " inner join " + CustomSchema.Schema + ".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHH_PRUEBA\".\"OrganizationalUnit\" ou " +
+                        " inner join " + CustomSchema.Schema + ".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\"" +
                         " where \"Serv_ProcessId\" = " + process.Id +
                         " order by sv.\"Id\" asc;";
@@ -292,10 +333,10 @@ namespace UcbBack.Controllers
                     query =
                         "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
                         " sv.\"Sigla\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
-                        " from \"ADMNALRRHH_PRUEBA\".\"Serv_Paralelo\" sv " +
-                        " inner join \"ADMNALRRHH_PRUEBA\".\"Dependency\" d " +
+                        " from " + CustomSchema.Schema + ".\"Serv_Paralelo\" sv " +
+                        " inner join " + CustomSchema.Schema + ".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHH_PRUEBA\".\"OrganizationalUnit\" ou " +
+                        " inner join " + CustomSchema.Schema + ".\"OrganizationalUnit\" ou " +
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\"" +
                         " where \"Serv_ProcessId\" = " + process.Id +
                         " order by sv.\"Id\" asc;";
@@ -614,7 +655,7 @@ namespace UcbBack.Controllers
             var B1 = B1Connection.Instance();
             HttpResponseMessage response = new HttpResponseMessage();
             var user = auth.getUser(Request);
-            var processes = _context.ServProcesses.Include(x=>x.Branches).Where(f =>
+            var processes = _context.ServProcesses.Include(x => x.Branches).Where(f =>
                 f.Id == id && f.State == ServProcess.Serv_FileState.PendingApproval);
 
             if (processes.Count() == 0)
@@ -632,6 +673,7 @@ namespace UcbBack.Controllers
 
             DateTime date = DateTime.Parse(webdata["date"].ToString());
             process.InSAPAt = date;
+
             var data = process.getVoucherData(_context);
             var memos = data.Select(x => x.Memo).Distinct().ToList();
 
@@ -644,19 +686,19 @@ namespace UcbBack.Controllers
 
                 var ppagar = data.Where(g => g.Concept == "PPAGAR" && g.Memo == memo).Select(g => new Serv_Voucher()
                 {
-                    CardName=g.CardName,
-                    CardCode=g.CardCode,
-                    OU=g.OU,
-                    PEI=g.PEI,
-                    Carrera=g.Carrera,
-                    Paralelo=g.Paralelo,
-                    Periodo=g.Periodo,
-                    ProjectCode=g.ProjectCode,
-                    Memo=g.Memo,
-                    LineMemo=g.LineMemo,
-                    Concept=g.Concept,
+                    CardName = g.CardName,
+                    CardCode = g.CardCode,
+                    OU = g.OU,
+                    PEI = g.PEI,
+                    Carrera = g.Carrera,
+                    Paralelo = g.Paralelo,
+                    Periodo = g.Periodo,
+                    ProjectCode = g.ProjectCode,
+                    Memo = g.Memo,
+                    LineMemo = g.LineMemo,
+                    Concept = g.Concept,
                     //AssignedAccount=g.AssignedAccount,
-                    Account=g.Account,
+                    Account = g.Account,
                     Credit = g.Credit,
                     Debit = g.Debit
                 }).ToList();
@@ -678,27 +720,27 @@ namespace UcbBack.Controllers
                 }).Select(g => new Serv_Voucher()
                 {
                     CardName = "",
-                    CardCode=g.Key.CardCode,
-                    OU=g.Key.OU,
-                    PEI=g.Key.PEI,
-                    Carrera=g.Key.Carrera,
-                    Paralelo=g.Key.Paralelo,
-                    Periodo=g.Key.Periodo,
-                    ProjectCode=g.Key.ProjectCode,
-                    Memo=g.Key.Memo,
-                    LineMemo=g.Key.LineMemo,
-                    Concept=g.Key.Concept,
+                    CardCode = g.Key.CardCode,
+                    OU = g.Key.OU,
+                    PEI = g.Key.PEI,
+                    Carrera = g.Key.Carrera,
+                    Paralelo = g.Key.Paralelo,
+                    Periodo = g.Key.Periodo,
+                    ProjectCode = g.Key.ProjectCode,
+                    Memo = g.Key.Memo,
+                    LineMemo = g.Key.LineMemo,
+                    Concept = g.Key.Concept,
                     //AssignedAccount=g.Key.AssignedAccount,
-                    Account=g.Key.Account,
+                    Account = g.Key.Account,
                     Credit = g.Sum(s => s.Credit),
                     Debit = g.Sum(s => s.Debit)
                 }).ToList();
 
                 List<Serv_Voucher> dist1 = ppagar.Union(rest).OrderBy(z => z.Debit == 0.00M ? 1 : 0).ThenBy(z => z.Account).ToList();
-                B1.addServVoucher(user.Id,dist1.ToList(),process);
+                B1.addServVoucher(user.Id, dist1.ToList(), process);
             }
 
-            if(memos.Count()>1)
+            if (memos.Count() > 1)
                 process.SAPId = "Multiples.";
             process.State = ServProcess.Serv_FileState.INSAP;
             process.LastUpdatedBy = user.Id;
@@ -792,7 +834,7 @@ namespace UcbBack.Controllers
                             Nombre_del_Proyecto = "",
                             Versión = "",
                             Periodo_Académico = "",
-                            Tipo_de_Tarea_Asignada = "",
+                            Tipo_Tarea_Asignada = "",
                             Cuenta_Asignada = "",
                             Monto_Contrato = 0,
                             Monto_IUE = 0,
