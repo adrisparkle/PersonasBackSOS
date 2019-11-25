@@ -35,7 +35,7 @@ namespace UcbBack.Models.Not_Mapped.ViewMoldes
         public string Periodo_Académico { get; set; }
 
         [DisplayName("Tipo de Tarea Asignada")]
-        public string Tipo_de_Tarea_Asignada { get; set; }
+        public string Tipo_Tarea_Asignada { get; set; }
 
         [DisplayName("Cuenta Asignada")]
         public string Cuenta_Asignada { get; set; }
