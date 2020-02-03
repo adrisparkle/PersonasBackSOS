@@ -108,7 +108,7 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                 bool v4 = VerifyLength(5, 50);
                 var periodo = connB1.getCostCenter(B1Connection.Dimension.Periodo).Cast<string>().ToList();
                 bool v5 = VerifyColumnValueIn(6, periodo, comment: "Este Periodo no existe en SAP.");
-                bool v6 = VerifyParalel(cod: 9, periodo: 6, sigla: 7, paralelo: 8, dependency: 17);
+                bool v6 = VerifyParalel(cod: 9, periodo: 6, sigla: 7, paralelo: 8, dependency: 3, branch:this.process.BranchesId);//esta dependencia debe estar en 3, no 17
                 bool v7 = VerifyColumnValueIn(10, new List<string> { "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
                 bool v8 = VerifyTotal();
 
