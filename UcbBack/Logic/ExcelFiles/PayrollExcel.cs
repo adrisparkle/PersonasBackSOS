@@ -114,8 +114,8 @@ namespace UcbBack.Logic.ExcelFiles
             bool v7 = ValidateLiquidoPagable();
             bool v8 = ValidatenoZero();
             bool v9 = validateAllPeopleInPayroll();
-            // HB
-            bool v10 = ValidateNoNegative(6);
+            // HB jamás puede ser <=0
+            bool v10 = ValidateHBIsNotZero(6);
             // Bono
             bool v11 = ValidateNoNegative(7);
             // Otros Ingresos
@@ -154,11 +154,11 @@ namespace UcbBack.Logic.ExcelFiles
             bool v28 = ValidateSN(13);
             // Socio de Negocio SSU
             bool v29 = ValidateSN(25);
-            bool Negativos = v10 && v11 && v12 && v13 && v14 && v15 && v16 && v17 && v18 && v19 && v20 && v21 && v22 &&
+            bool Negativos = v11 && v12 && v13 && v14 && v15 && v16 && v17 && v18 && v19 && v20 && v21 && v22 &&
                              v23 && v24 && v25 && v26 && v27;
             // Cheque or Banco
             bool v30 = VerifyColumnValueIn(30,new List<string>(){"CHQ","BCO"},comment:"Este no es un tipo valido de modo de pago");
-            return isValid() && v1 && v2 && v3 && v4 && v5 && v6  && v7 && v8 && v9 && Negativos && v28 && v29 && v30;
+            return isValid() && v1 && v2 && v3 && v4 && v5 && v6  && v7 && v8 && v9 && v10 && Negativos && v28 && v29 && v30;
         }
 
         public bool ValidateSN(int col, int sheet = 1)
@@ -201,7 +201,32 @@ namespace UcbBack.Logic.ExcelFiles
             }
             valid = valid && res;
             if (!res)
-                addError("Valor negativo", "Existen columnas que no pueden ser negativas");
+                addError("Valor negativo", "Existen columnas que no pueden ser negativas, ni iguales a 0");
+            return res;
+        }
+
+
+        public bool ValidateHBIsNotZero(int col, int sheet = 1)
+        {
+            bool res = true;
+            string comment = "Este Valor no puede ser menor o igual 0.";
+            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+            var l = UsedRange.LastRow().RowNumber();
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                double nz = -1;
+                if (Double.TryParse(wb.Worksheet(sheet).Cell(i, col).Value.ToString(), out nz))
+                {
+                    if (nz <= 0)
+                    {
+                        res = false;
+                        paintXY(col, i, XLColor.Red, comment);
+                    }
+                }
+            }
+            valid = valid && res;
+            if (!res)
+                addError("Valor de haber básico menor o igual a 0", "La columna del haber básico no puede ser menor o igual a 0");
             return res;
         }
 
@@ -210,7 +235,7 @@ namespace UcbBack.Logic.ExcelFiles
             int tipo = 20;
             int nozero = 22;
             bool res = true;
-            string comment = "Este Valor no puede se cero.";
+            string comment = "Este Valor no puede ser cero.";
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
             var l = UsedRange.LastRow().RowNumber();
             for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
