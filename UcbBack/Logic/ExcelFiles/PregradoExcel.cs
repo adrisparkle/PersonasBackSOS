@@ -77,8 +77,9 @@ namespace UcbBack.Logic.ExcelFiles
             bool v1 = VerifyPerson(ci: 1, fullname: 2, CUNI: 8, date: this.gestion + "-" + this.mes + "-01", personActive: false);
             bool v2 = VerifyColumnValueIn(7, connB1.getCostCenter(B1Connection.Dimension.PlanAcademico, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este Plan de Estudio no existe en SAP.");
             int brId = Int32.Parse(this.segmentoOrigen);
-            bool v3 = VerifyColumnValueIn(9, _context.Dependencies.Where(x=>x.BranchesId==brId).Select(m => m.Cod).Distinct().ToList());
-            return isValid() && v1 && v2 && v3;
+            bool v3 = VerifyColumnValueIn(9, _context.Dependencies.Where(x=>x.BranchesId==brId).Select(m => m.Cod).Distinct().ToList());//valida que la dependencia exista en nuestra base
+            bool v4 = VerifyCareer(cod:7, branch:brId, dependency:9, sheet:1);//esto no esta bien 
+            return isValid() && v1 && v2 && v3 && v4;
         }
 
         public Dist_Pregrado ToDistDiscounts(int row, int sheet = 1)
