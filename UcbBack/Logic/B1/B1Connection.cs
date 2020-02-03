@@ -1515,7 +1515,7 @@ namespace UcbBack.Logic.B1
             string[] dim1cols = new string[]
             {
                 "\"PrjCode\"", "\"PrjName\"", "\"Locked\"", "\"DataSource\"", "\"ValidFrom\"",
-                "\"ValidTo\"", "\"Active\"", "\"U_ModalidadProy\"", "\"U_Sucursal\"", "\"U_Tipo\""
+                "\"ValidTo\"", "\"Active\"", "\"U_ModalidadProy\"", "\"U_Sucursal\"", "\"U_Tipo\"", "\"U_UORGANIZA\""
             };
 
             string strcol = "";
@@ -1573,13 +1573,20 @@ namespace UcbBack.Logic.B1
 
                 string strcol = "";
                 bool first = true;
-
+                //arma los datos para el select según la dimensión
                 foreach (var column in dim1cols[(int)dimesion])
                 {
                     strcol += (first ? "" : ",") + column;
                     first = false;
                 }
-
+                /*si la dimension es 0, select todo-> revisar que el mes sea diferente de la gestion, si lo fuera-> busca proyectos que tengan el 1ro de enero entre sus fechas válidas
+                 *  o que la primera fecha para la gestion y el mes sea mayor al VF y el VT es nulo
+                 *  si el mes es igual a la gestión-> no hay where
+                 si la dimensión no es 0 -> busca la dimension solicitada y los proyectos segun el mes y gestion entre fechas validas
+                    el caso de VT nulo
+                    si el mes es igual a la gestión->busca proyectos por dimension nada más*/
+                
+                //por qué el mes sería igual a la gestión? por si el mes y la gestion no se envían como parámetros -->llegan como null
                 string where = (int)dimesion == 0
                     ? ((mes != gestion) ? " where ('2018-02-01 01:00:00' " +
                       "between \"ValidFrom\" and \"ValidTo\")" +
@@ -1591,6 +1598,7 @@ namespace UcbBack.Logic.B1
                       "or ('2018-02-01 01:00:00' > \"ValidFrom\" " +
                       "and \"ValidTo\" is null))" : " where \"DimCode\"=" + (int)dimesion);
                 string query = "Select " + strcol + " from " + DatabaseName + ".OPRC" + where;
+                //ejecuta el query dinámico
                 HanaCommand command = new HanaCommand(query, HanaConn);
                 HanaDataReader dataReader = command.ExecuteReader();
 
@@ -1612,24 +1620,31 @@ namespace UcbBack.Logic.B1
                     }
                 }
             }
-
+            //devuelve lista dinámica con los elementos del query
             return res;
         }
 
         public List<object> getParalels()
         {
-            List<object> list = new List<object>();
+            List<dynamic> list = new List<dynamic>();
+            
             if (connectedtoHana)
             {
-                string query = "select a.\"PrcCode\", a.\"U_PeriodoPARALELO\", a.\"U_Sigla\", a.\"U_Paralelo\", b.\"CODUNIDADORGANIZACIONAL\" "
+                string query = "select a.\"PrcCode\", a.\"U_PeriodoPARALELO\", a.\"U_Sigla\", a.\"U_Paralelo\", b.\"CODUNIDADORGANIZACIONAL\", b.\"UNIDAD_AUXILIAR\", "
+                + "case "
+                + "when \"PrcCode\" like 'D%' then 'TEO' "
+                + "when \"PrcCode\" like 'T%' then 'TJA' "
+                + "when \"PrcCode\" like 'E%' then 'EPC' "
+                + "when \"PrcCode\" like 'L%' then 'LPZ' "
+                + "when \"PrcCode\" like 'C%' then 'CBB' "
+                + "when \"PrcCode\" like 'S%' then 'SCZ' "
+                + "when \"PrcCode\" like 'U%' then 'UCE' "
+                + "end as \"Segmento\" "
                 + "from ucatolica.oprc a "
                 + "inner join admnal.\"T_REG_PARALELOS\" b "
-                + " on a.\"PrcCode\" = b.\"CODIGOSAP\""
-                + " WHERE a.\"DimCode\" = " + 4;
+                + "on a.\"PrcCode\" = b.\"CODIGOSAP\" "
+                + "WHERE a.\"DimCode\" = " + 4;
 
-                /*string query = "select \"PrcCode\", \"U_PeriodoPARALELO\", \"U_Sigla\", \"U_Paralelo\""
-                               + "from " + DatabaseName + ".oprc"
-                               + " WHERE \"DimCode\" = " + 4;*/
                 HanaCommand command = new HanaCommand(query, HanaConn);
                 HanaDataReader dataReader = command.ExecuteReader();
 
@@ -1643,6 +1658,43 @@ namespace UcbBack.Logic.B1
                         o.sigla = dataReader["U_Sigla"].ToString();
                         o.paralelo = dataReader["U_Paralelo"].ToString();
                         o.OU = dataReader["CODUNIDADORGANIZACIONAL"].ToString();
+                        o.auxiliar = dataReader["UNIDAD_AUXILIAR"].ToString();
+                        o.segmento = dataReader["Segmento"].ToString();
+                        list.Add(o);
+                    }
+                }
+            }
+
+            return list;
+        }
+
+        public List<object> getCareers()
+        {
+            List<dynamic> list = new List<dynamic>();
+            if (connectedtoHana)
+            {
+                string query = "select a.\"PrcCode\", a.\"PrcName\", a.\"ValidFrom\", a.\"ValidTo\", a.\"U_NUM_INT_CAR\", a.\"U_Nivel\", b.\"U_CODIGO_DEPARTAMENTO\", b.\"U_CODIGO_SEGMENTO\" "
+                + "from ucatolica.oprc a "
+                + "inner join ucatolica.\"@T_GEN_CARRERAS\" b "
+                + " on a.\"PrcCode\" = b.\"U_CODIGO_CARRERA\" "
+                + " WHERE a.\"DimCode\" = " + 3;
+
+                HanaCommand command = new HanaCommand(query, HanaConn);
+                HanaDataReader dataReader = command.ExecuteReader();
+
+                if (dataReader.HasRows)
+                {
+                    while (dataReader.Read())
+                    {
+                        dynamic o = new JObject();
+                        o.cod = dataReader["PrcCode"].ToString();
+                        o.carrera = dataReader["PrcName"].ToString();
+                        o.validFrom = dataReader["ValidFrom"].ToString();
+                        o.validTo = dataReader["ValidTo"].ToString();
+                        o.num_int_car = dataReader["U_NUM_INT_CAR"].ToString();
+                        o.nivel = dataReader["U_Nivel"].ToString();
+                        o.OU = dataReader["U_CODIGO_DEPARTAMENTO"].ToString();
+                        o.segmento = dataReader["U_CODIGO_SEGMENTO"].ToString();
                         list.Add(o);
                     }
                 }
