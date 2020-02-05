@@ -195,12 +195,17 @@ namespace UcbBack.Logic.ExcelFiles
             for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
             {
                 //Si el proyecto existe en SAP ahí validamos los tipos de proyecto y cuentas asignadas
-
+                
                 if (listParams.Exists(x => string.Equals(x.PrjCode.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
                 {
+                    var strproject = index != -1 ? wb.Worksheet(sheet).Cell(i, index).Value.ToString() : null;
+                    var row = listParams.FirstOrDefault(x => x.PrjCode == strproject);
+                    string UO = row.U_UORGANIZA.ToString();
+                    var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
+                    var dep = _context.Dependencies.Where(x => x.BranchesId == branchId).Include(x => x.OrganizationalUnit).FirstOrDefault(x => x.Cod == strdependency);
                     //Validamos aunque la UO no iguale, esto con el objetivo de que marque los errores
                     //CAP se deja pasar
-                    if (wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() != "CAP")
+                    if (wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() != "CAP" && row.U_UORGANIZA!=dep.OrganizationalUnit.Cod)
                     {
                         //-----------------------------Validacion del tipo--------------------------------
                         var projectAccount = wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString();
@@ -210,7 +215,7 @@ namespace UcbBack.Logic.ExcelFiles
                         if (!typeExists)
                         {
                             //si el proyecto tiene un U_Tipo en SAP y no lo tenemos en personas, entonces no es válido. Pasa para los proyectos con U_Tipo 'I', ESOS NUNCA ENTRAN EN PLANILLAS, este If es una formalidad
-                            commnet = "Proyecto no válido";
+                            commnet = "El tipo de proyecto no es válido";
                             paintXY(index, i, XLColor.Red, commnet);
                             badType++;
                             res = false;
@@ -245,7 +250,7 @@ namespace UcbBack.Logic.ExcelFiles
             var connB1 = B1Connection.Instance();
             int branchId = Convert.ToInt16(segmentoOrigen);
             var branch = _context.Branch.FirstOrDefault(x => x.Id == branchId).Abr;
-            var list = connB1.getProjects("*").Where(x => x.U_Sucursal == branch).Select(x => new { x.PrjCode, x.U_Tipo, x.ValidFrom, x.ValidTo }).ToList();
+            var list = connB1.getProjects("*").Where(x => x.U_Sucursal == branch).Select(x => new { x.PrjCode, x.U_Tipo, x.ValidFrom, x.ValidTo, x.U_UORGANIZA }).ToList();
             int index = 15;
             bool res = true;
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
@@ -254,23 +259,31 @@ namespace UcbBack.Logic.ExcelFiles
 
             for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
             {
+               
                 //Si el proyecto existe en SAP ahí validamos fechas
                 if (list.Exists(x => string.Equals(x.PrjCode.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
                 {
+                    var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
+                    var strproject = index != -1 ? wb.Worksheet(sheet).Cell(i, index).Value.ToString() : null;
+                    var row = list.FirstOrDefault(x => x.PrjCode == strproject);
+                    string UO = row.U_UORGANIZA.ToString();
+                    var dep = _context.Dependencies.Where(x => x.BranchesId == branchId).Include(x => x.OrganizationalUnit).FirstOrDefault(x => x.Cod == strdependency);
+                    if (row.U_UORGANIZA != dep.OrganizationalUnit.Cod) {
+                        //-----------------------------Validaciones de la fecha del proyecto--------------------------------
+                        var projectInitialDate = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().ValidFrom.ToString();
+                        DateTime parsedIni = Convert.ToDateTime(projectInitialDate);
+                        var projectFinalDate = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().ValidTo.ToString();
+                        DateTime parsedFin = Convert.ToDateTime(projectFinalDate);
 
-                    //-----------------------------Validaciones de la fecha del proyecto--------------------------------
-                    var projectInitialDate = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().ValidFrom.ToString();
-                    DateTime parsedIni = Convert.ToDateTime(projectInitialDate);
-                    var projectFinalDate = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().ValidTo.ToString();
-                    DateTime parsedFin = Convert.ToDateTime(projectFinalDate);
-
-                    //si el tiempo actual es menor al inicio del proyecto en SAP ó si el tiempo actual es mayor a la fecha límite del proyectoSAP
-                    if (System.DateTime.Now < parsedIni || System.DateTime.Now > parsedFin)
-                    {
-                        res = false;
-                        commnet = "La fecha de este proyecto ya está cerrada, estuvo disponible del " + parsedIni + " al " + parsedFin;
-                        paintXY(index, i, XLColor.Red, commnet);
+                        //si el tiempo actual es menor al inicio del proyecto en SAP ó si el tiempo actual es mayor a la fecha límite del proyectoSAP
+                        if (System.DateTime.Now < parsedIni || System.DateTime.Now > parsedFin)
+                        {
+                            res = false;
+                            commnet = "La fecha de este proyecto ya está cerrada, estuvo disponible del " + parsedIni + " al " + parsedFin;
+                            paintXY(index, i, XLColor.Red, commnet);
+                        }
                     }
+                    
                 }
             }
             valid = valid && res;

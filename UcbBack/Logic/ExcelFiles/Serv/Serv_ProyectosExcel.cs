@@ -12,7 +12,7 @@ using System.Configuration;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 using System.Globalization;
 using System.Data.Entity;
-
+using Newtonsoft.Json.Linq;
 
 namespace UcbBack.Logic.ExcelFiles.Serv
 {
@@ -123,8 +123,8 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                 {
                     v9 = VerifyNotEmpty(i) && v9;
                 }
-                bool v10 = verifyAccounts();
-                bool v11 = verifyDates();
+                bool v10 = verifyAccounts(dependency:3);
+                bool v11 = verifyDates(dependency: 3);
 
                 return v1 && v2 && v3 && v4 && v5 && v6 && v7 && v8 && v9;
             }
@@ -151,7 +151,7 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                 var dep = _context.Dependencies.Where(x => x.BranchesId == br.Id).Include(x => x.OrganizationalUnit).FirstOrDefault(x => x.Cod == strdependency);
                 //------------------------------------Valida existencia del proyecto--------------------------------
                 //Si no existe en esta rama un proyecto que haga match con el proyecto del excel
-                if (!list.Exists(x => string.Equals(x.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
+                if (!list.Exists(x => string.Equals(x.PrjCode.ToString(), strproject, StringComparison.OrdinalIgnoreCase)))
                 {
                     //Si el tipo de proyecto, no es de los siguientes tipos y el codigo del proyecto no viene vacío
                     if (!(
@@ -193,13 +193,13 @@ namespace UcbBack.Logic.ExcelFiles.Serv
             return res;
         }
 
-       private bool verifyAccounts(int sheet = 1)
+       private bool verifyAccounts(int dependency, int sheet = 1)
        {
            string commnet;//especifica el error
            var connB1 = B1Connection.Instance();
            var br = _context.Branch.FirstOrDefault(x => x.Id == process.BranchesId);
            //todos los proyectos de esa rama
-           var list = connB1.getProjects("*").Where(x => x.U_Sucursal == br.Abr).Select(x => new { x.PrjCode, x.U_Tipo, x.ValidFrom, x.ValidTo }).ToList();
+           var list = connB1.getProjects("*").Where(x => x.U_Sucursal == br.Abr).Select(x => new { x.PrjCode, x.U_Tipo, x.ValidFrom, x.ValidTo, x.U_UORGANIZA }).ToList();
            //columnas del excel
            int index = 6;
            int tipoProyecto = 11;
@@ -211,30 +211,39 @@ namespace UcbBack.Logic.ExcelFiles.Serv
            {
                if (list.Exists(x => string.Equals(x.PrjCode.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
                {
-                   //-----------------------------Validaciones de la cuenta--------------------------------
+                   var strproject = index != -1 ? wb.Worksheet(sheet).Cell(i, index).Value.ToString() : null;
+                   var row = list.FirstOrDefault(x => x.PrjCode == strproject);
+                   string UO = row.U_UORGANIZA.ToString();
+                   var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
+                   var dep = _context.Dependencies.Where(x => x.BranchesId == br.Id).Include(x => x.OrganizationalUnit).FirstOrDefault(x => x.Cod == strdependency);
+                   //Si la UO hace match también
+                   if(row.U_UORGANIZA==dep.OrganizationalUnit.Cod){
+                    //-----------------------------Validaciones de la cuenta--------------------------------
                    var projectAccount = wb.Worksheet(sheet).Cell(i, tipoProyecto).Value.ToString();
                    var projectType = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().U_Tipo.ToString();//tipo de proyecto del proyecto en la celda
                    string tipo = projectType;//variable auxiliar, no puede usarse la de arriba en EF por ser dinámica
                    var typeExists = _context.TableOfTableses.ToList().Exists(x => string.Equals(x.Type, tipo, StringComparison.OrdinalIgnoreCase));
-                   //el tipo de proyecto existe en nuestra tabla de tablas?
-                   if (!typeExists)
-                   {
-                       commnet = "Proyecto no válido";
-                       paintXY(index, i, XLColor.Red, commnet);
-                       res = false;
-                       badType++;
-                   }
-                   else
-                   {
-                       var assignedAccount = _context.TableOfTableses.Where(x => x.Type == tipo).Where(x => x.Id >= 24 && x.Id<29).FirstOrDefault().Value.ToString();//la cuenta asignada a ese tipo de proyecto
-                       if (projectAccount != assignedAccount)
+                       //el tipo de proyecto existe en nuestra tabla de tablas?
+                       if (!typeExists)
                        {
-                           commnet = "La cuenta asignada es incorrecta, debería ser: " + assignedAccount;
-                           paintXY(tipoProyecto, i, XLColor.Red, commnet);
+                           commnet = "El tipo de proyecto no es válido";
+                           paintXY(index, i, XLColor.Red, commnet);
                            res = false;
-                           badAccount++;
+                           badType++;
+                       }
+                       else
+                       {
+                           var assignedAccount = _context.TableOfTableses.Where(x => x.Type == tipo).Where(x => x.Id >= 24 && x.Id<29).FirstOrDefault().Value.ToString();//la cuenta asignada a ese tipo de proyecto
+                           if (projectAccount != assignedAccount)
+                           {
+                               commnet = "La cuenta asignada es incorrecta, debería ser: " + assignedAccount;
+                               paintXY(tipoProyecto, i, XLColor.Red, commnet);
+                               res = false;
+                               badAccount++;
+                           }
                        }
                    }
+                   
                }
            }
            valid = valid && res;
@@ -245,16 +254,15 @@ namespace UcbBack.Logic.ExcelFiles.Serv
            return res;
        }
 
-       private bool verifyDates(int sheet = 1)
+       private bool verifyDates(int dependency, int sheet = 1)
        {
            string commnet;//especifica el error
            var connB1 = B1Connection.Instance();
            var br = _context.Branch.FirstOrDefault(x => x.Id == process.BranchesId);
            //todos los proyectos de esa rama
-           var list = connB1.getProjects("*").Where(x => x.U_Sucursal == br.Abr).Select(x => new { x.PrjCode, x.U_Tipo, x.ValidFrom, x.ValidTo }).ToList();
+           var list = connB1.getProjects("*").Where(x => x.U_Sucursal == br.Abr).Select(x => new { x.PrjCode, x.U_Tipo, x.ValidFrom, x.ValidTo, x.U_UORGANIZA }).ToList();
            //columnas del excel
            int index = 6;
-           int tipoProyecto = 11;
            bool res = true;
            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
            var l = UsedRange.LastRow().RowNumber();
@@ -263,18 +271,26 @@ namespace UcbBack.Logic.ExcelFiles.Serv
            {
                if (list.Exists(x => string.Equals(x.PrjCode.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
                {
-                   //-----------------------------Validaciones de la fecha del proyecto--------------------------------
-                   var projectInitialDate = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().ValidFrom.ToString();
-                   DateTime parsedIni = Convert.ToDateTime(projectInitialDate);
-                   var projectFinalDate = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().ValidTo.ToString();
-                   DateTime parsedFin = Convert.ToDateTime(projectFinalDate);
+                   var strproject = index != -1 ? wb.Worksheet(sheet).Cell(i, index).Value.ToString() : null;
+                   var row = list.FirstOrDefault(x => x.PrjCode == strproject);
+                   string UO = row.U_UORGANIZA.ToString();
+                   var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
+                   var dep = _context.Dependencies.Where(x => x.BranchesId == br.Id).Include(x => x.OrganizationalUnit).FirstOrDefault(x => x.Cod == strdependency);
+                   //Si la UO hace match también
+                   if(row.U_UORGANIZA==dep.OrganizationalUnit.Cod){
+                       //-----------------------------Validaciones de la fecha del proyecto--------------------------------
+                       var projectInitialDate = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().ValidFrom.ToString();
+                       DateTime parsedIni = Convert.ToDateTime(projectInitialDate);
+                       var projectFinalDate = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().ValidTo.ToString();
+                       DateTime parsedFin = Convert.ToDateTime(projectFinalDate);
 
-                   //si el tiempo actual es menor al inicio del proyecto en SAP ó si el tiempo actual es mayor a la fecha límite del proyectoSAP
-                   if (System.DateTime.Now < parsedIni || System.DateTime.Now > parsedFin)
-                   {
-                       res = false;
-                       commnet = "La fecha de este proyecto ya está cerrada, estuvo disponible del " + parsedIni + " al " + parsedFin;
-                       paintXY(index, i, XLColor.Red, commnet);
+                       //si el tiempo actual es menor al inicio del proyecto en SAP ó si el tiempo actual es mayor a la fecha límite del proyectoSAP
+                       if (System.DateTime.Now < parsedIni || System.DateTime.Now > parsedFin)
+                       {
+                           res = false;
+                           commnet = "La fecha de este proyecto ya está cerrada, estuvo disponible del " + parsedIni + " al " + parsedFin;
+                           paintXY(index, i, XLColor.Red, commnet);
+                       }
                    }
                }
            }
