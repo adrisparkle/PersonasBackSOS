@@ -529,51 +529,61 @@ namespace UcbBack.Logic
                 var strperiodo = periodo != -1 ? wb.Worksheet(sheet).Cell(i, periodo).Value.ToString() : null;
                 var strsigla = sigla != -1 ? wb.Worksheet(sheet).Cell(i, sigla).Value.ToString() : null;
                 var strparalelo = paralelo != -1 ? wb.Worksheet(sheet).Cell(i, paralelo).Value.ToString() : null;
+                //para hacer las validaciones de UO
                 var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
                 var dep = _context.Dependencies.Where(x => x.BranchesId == branch).Include(x => x.OrganizationalUnit)
                     .FirstOrDefault(x => x.Cod == strdependency);
-                
-                 //Si no existe un match del código del paralelo en SAP, el periodo, la sigla y el paralelo del excel con Datos Maestros, especificamos el error...
-                //A´demás de lo validado en el comentario previo, se revisa si hay match con la UO correcta, ya sea de la col OU o de la tabla auxiliar. Debajo se valida la OU
-                if (/*dep == null ||*/ !filteredList.Any(x => (x.cod == strcod && x.periodo == strperiodo && x.sigla == strsigla && x.paralelo == strparalelo) && (x.OU == dep.OrganizationalUnit.Cod || x.auxiliar == dep.OrganizationalUnit.Cod )))
+                if (dep == null)
                 {
+                    paintXY(dependency, i, XLColor.Red, "Esta dependencia no existe en la Base de Datos Nacional.");
                     res = false;
-                    if (filteredList.Any(x => x.cod == strcod))//si hay match con el código del paralelo, especificamos cual fue el elemento que no hizo match
+                }
+                else {
+                    //Solo se valida si existe la dep
+                    //Si no existe un match del código del paralelo en SAP, el periodo, la sigla y el paralelo del excel con Datos Maestros, especificamos el error...
+                    //A´demás de lo validado en el comentario previo, se revisa si hay match con la UO correcta, ya sea de la col OU o de la tabla auxiliar. Debajo se valida la OU
+                    if (!filteredList.Any(x => (x.cod == strcod && x.periodo == strperiodo && x.sigla == strsigla && x.paralelo == strparalelo) && (x.OU == dep.OrganizationalUnit.Cod || x.auxiliar == dep.OrganizationalUnit.Cod)))
                     {
-                        var row = filteredList.FirstOrDefault(x => x.cod == strcod);
-                        if (row.sigla != strsigla)
+                        res = false;
+                        if (filteredList.Any(x => x.cod == strcod))//si hay match con el código del paralelo, especificamos cual fue el elemento que no hizo match
                         {
-                            paintXY(sigla, i, XLColor.Red, "Esta Sigla no es correcta." );
-                        }
-                        if (row.periodo != strperiodo)
-                        {
-                            paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
-                        }
-                        if (row.paralelo != strparalelo)
-                        {
-                            paintXY(paralelo, i, XLColor.Red, "Este Paralelo no es correcto.");
-                        }
-                        // Verificar UO: si este paralelo tiene una UO auxiliar, esa es la que manda, sino validar con la columna OU
-                        if (row.auxiliar != "")
-                        {
-                            if (dep.OrganizationalUnit.Cod.ToString() != row.auxiliar.ToString())
+                            var row = filteredList.FirstOrDefault(x => x.cod == strcod);
+                            if (row.sigla != strsigla)
                             {
-                                string UO = row.auxiliar.ToString();
-                                string UOName = _context.OrganizationalUnits.FirstOrDefault(x => x.Cod == UO).Name;
-                                paintXY(dependency, i, XLColor.Red, "Este paralelo debería tener una dependencia asociada a la UO: " + row.auxiliar +" "+UOName);
+                                paintXY(sigla, i, XLColor.Red, "Esta Sigla no es correcta.");
+                            }
+                            if (row.periodo != strperiodo)
+                            {
+                                paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
+                            }
+                            if (row.paralelo != strparalelo)
+                            {
+                                paintXY(paralelo, i, XLColor.Red, "Este Paralelo no es correcto.");
+                            }
+                            // Verificar UO: si este paralelo tiene una UO auxiliar, esa es la que manda, sino validar con la columna OU
+                            if (row.auxiliar != "")
+                            {
+                                if (dep.OrganizationalUnit.Cod.ToString() != row.auxiliar.ToString())
+                                {
+                                    string UO = row.auxiliar.ToString();
+                                    string UOName = _context.OrganizationalUnits.FirstOrDefault(x => x.Cod == UO).Name;
+                                    paintXY(dependency, i, XLColor.Red, "Este paralelo debería tener una dependencia asociada a la UO: " +UOName);
+                                }
+                            }
+                            else
+                            {
+                                if (dep.OrganizationalUnit.Cod.ToString() != row.OU.ToString())
+                                {
+                                    string UO = row.OU.ToString();
+                                    string UOName = _context.OrganizationalUnits.FirstOrDefault(x => x.Cod == UO).Name;
+                                    paintXY(dependency, i, XLColor.Red, "Este paralelo debería tener una dependencia asociada a la UO: " + UOName);
+                                }
                             }
                         }
-                        else{ 
-                            if(dep.OrganizationalUnit.Cod.ToString()!=row.OU.ToString()){
-                                string UO = row.OU.ToString();
-                                string UOName = _context.OrganizationalUnits.FirstOrDefault(x => x.Cod == UO).Name;
-                                paintXY(dependency, i, XLColor.Red, "Este paralelo debería tener una dependencia asociada a la UO: " + row.OU +" "+UOName );
-                            }
+                        else
+                        {
+                            paintXY(cod, i, XLColor.Red, "Este código de paralelo no existe en SAP, al menos para esta regional");
                         }
-                    }
-                    else
-                    {
-                        paintXY(cod, i, XLColor.Red, "Este código de paralelo no existe en SAP, al menos para esta regional");
                     }
                 }
             }
@@ -732,25 +742,32 @@ namespace UcbBack.Logic
                 var strcod = cod != -1 ? wb.Worksheet(sheet).Cell(i, cod).Value.ToString() : null;
                 var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
                 var dep = _context.Dependencies.Where(x => x.BranchesId == branch).Include(x => x.OrganizationalUnit).FirstOrDefault(x => x.Cod == strdependency);
-
-                //Si no existe un match del código de la carrera
-                if (!filteredList.Any(x => x.cod == strcod && x.OU == dep.OrganizationalUnit.Cod))
+                if (dep == null)
                 {
+                    //Si no existe la dependencia entonces no podemos validar
+                    paintXY(dependency, i, XLColor.Red, "Esta dependencia no existe en la base de Datos Nacional");
                     res = false;
-                    if (filteredList.Any(x => x.cod == strcod))
+                }
+                else {
+                    //Si no existe un match del código de la carrera
+                    if (!filteredList.Any(x => x.cod == strcod && x.OU == dep.OrganizationalUnit.Cod))
                     {
-                        var row = filteredList.FirstOrDefault(x => x.cod == strcod);
-                        // Verify dependency
-                        if (dep.OrganizationalUnit.Cod.ToString() != row.OU.ToString())
+                        res = false;
+                        if (filteredList.Any(x => x.cod == strcod))
                         {
-                            string UO = row.OU.ToString();
-                            string UOName = _context.OrganizationalUnits.FirstOrDefault(x => x.Cod == UO).Name;
-                            paintXY(dependency, i, XLColor.Red, "Esta carrera debería tener una dependencia asociada a la UO:" + row.OU + UOName);
+                            var row = filteredList.FirstOrDefault(x => x.cod == strcod);
+                            // Verifica UO
+                            if (dep.OrganizationalUnit.Cod.ToString() != row.OU.ToString())
+                            {
+                                string UO = row.OU.ToString();
+                                string UOName = _context.OrganizationalUnits.FirstOrDefault(x => x.Cod == UO).Name;
+                                paintXY(dependency, i, XLColor.Red, "Esta carrera debería tener una dependencia asociada a la UO: " + UOName);
+                            }
                         }
-                    }
-                    else
-                    {
-                        paintXY(cod, i, XLColor.Red, "Esta carrera no existe, al menos para esta regional");
+                        else
+                        {
+                            paintXY(cod, i, XLColor.Red, "Esta carrera no existe, al menos para esta regional");
+                        }
                     }
                 }
             }

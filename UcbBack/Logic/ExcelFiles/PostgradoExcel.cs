@@ -163,7 +163,7 @@ namespace UcbBack.Logic.ExcelFiles
                     {
                         //Si la UO para esta fila es diferente de la UO registrada en SAP, marcamos error
                         res = false;
-                        paintXY(dependency, i, XLColor.Red, "Este proyecto debe tener una dependencia asociada a la Unidad Org: "+row.U_UORGANIZA +" "+ UOName );
+                        paintXY(dependency, i, XLColor.Red, "Este proyecto debe tener una dependencia asociada a la Unidad Org: "+ UOName );
                     }
                     
                 }
@@ -263,25 +263,19 @@ namespace UcbBack.Logic.ExcelFiles
                 //Si el proyecto existe en SAP ahí validamos fechas
                 if (list.Exists(x => string.Equals(x.PrjCode.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
                 {
-                    var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
                     var strproject = index != -1 ? wb.Worksheet(sheet).Cell(i, index).Value.ToString() : null;
-                    var row = list.FirstOrDefault(x => x.PrjCode == strproject);
-                    string UO = row.U_UORGANIZA.ToString();
-                    var dep = _context.Dependencies.Where(x => x.BranchesId == branchId).Include(x => x.OrganizationalUnit).FirstOrDefault(x => x.Cod == strdependency);
-                    if (row.U_UORGANIZA != dep.OrganizationalUnit.Cod) {
-                        //-----------------------------Validaciones de la fecha del proyecto--------------------------------
-                        var projectInitialDate = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().ValidFrom.ToString();
-                        DateTime parsedIni = Convert.ToDateTime(projectInitialDate);
-                        var projectFinalDate = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().ValidTo.ToString();
-                        DateTime parsedFin = Convert.ToDateTime(projectFinalDate);
+                    //-----------------------------Validaciones de la fecha del proyecto--------------------------------
+                    var projectInitialDate = list.Where(x => x.PrjCode == strproject).FirstOrDefault().ValidFrom.ToString();
+                    DateTime parsedIni = Convert.ToDateTime(projectInitialDate);
+                    var projectFinalDate = list.Where(x => x.PrjCode == strproject).FirstOrDefault().ValidTo.ToString();
+                    DateTime parsedFin = Convert.ToDateTime(projectFinalDate);
 
-                        //si el tiempo actual es menor al inicio del proyecto en SAP ó si el tiempo actual es mayor a la fecha límite del proyectoSAP
-                        if (System.DateTime.Now < parsedIni || System.DateTime.Now > parsedFin)
-                        {
-                            res = false;
-                            commnet = "La fecha de este proyecto ya está cerrada, estuvo disponible del " + parsedIni + " al " + parsedFin;
-                            paintXY(index, i, XLColor.Red, commnet);
-                        }
+                    //si el tiempo actual es menor al inicio del proyecto en SAP ó si el tiempo actual es mayor a la fecha límite del proyectoSAP
+                    if (System.DateTime.Now < parsedIni || System.DateTime.Now > parsedFin)
+                    {
+                        res = false;
+                        commnet = "La fecha de este proyecto ya está cerrada, estuvo disponible del " + parsedIni + " al " + parsedFin;
+                        paintXY(index, i, XLColor.Red, commnet);
                     }
                     
                 }
