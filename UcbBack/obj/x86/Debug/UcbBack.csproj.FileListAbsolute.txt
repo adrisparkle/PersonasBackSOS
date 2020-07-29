@@ -1,0 +1,2 @@
+C:\Users\Juanpi\Desktop\dev\UcbBack.net\UcbBack\obj\x86\Debug\UcbBack.Migrations.FirstMigration.resources
+C:\Users\Juanpi\Desktop\dev\UcbBack.net\UcbBack\obj\x86\Debug\UcbBack.csproj.GenerateResource.Cache

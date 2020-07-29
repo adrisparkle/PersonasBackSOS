@@ -30,6 +30,8 @@ namespace UcbBack.Models
         public bool IsDesignated { get; set; }
         public int? DefaultLinkage { get; set; }
 
+        public String NameAbr { get; set; }
+
         public static int GetNextId(ApplicationDbContext _context)
         {
             return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_Position_sqs\".nextval FROM DUMMY;").ToList()[0];

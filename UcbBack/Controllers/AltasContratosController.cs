@@ -121,7 +121,7 @@ namespace UcbBack.Controllers
             {
                 var person = new People();
                 person = _context.Person.FirstOrDefault(x => x.CUNI == alta.CUNI);
-                var res = B1.AddOrUpdatePerson(user.Id, person);
+                var res = B1.AddOrUpdatePerson(user.Id, person, "DOCENTE T.H.");
                 if (!res.Contains("ERROR"))
                     alta.State = "INSAP";
                 else

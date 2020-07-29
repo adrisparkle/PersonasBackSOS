@@ -112,14 +112,14 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                 bool v7 = VerifyColumnValueIn(9, new List<string> { "TG", "REL", "LEC", "REV", "PAN", "EXA", "OTR" }, comment: "No existe esta tipo de Tarea Asignada.");
                 bool v8 = VerifyColumnValueIn(10, new List<string> { "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
                 bool v9 = VerifyTotal();
-
+                bool v11 = VerifyCareer(cod:6, branch:process.BranchesId,dependency:3, sheet:1);
                 bool v10 = true;
                 foreach (var i in new List<int>() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 })
                 {
                     v10 = VerifyNotEmpty(i) && v10;
                 }
 
-                return v1 && v2 && v3 && v4 && v5 && v6 && v7 && v8 && v9 && v10;
+                return v1 && v2 && v3 && v4 && v5 && v6 && v7 && v8 && v10 && v11 && v9;
             }
 
             return false;
@@ -135,9 +135,8 @@ namespace UcbBack.Logic.ExcelFiles.Serv
             {
                 decimal contrato = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(i, 11).Value.ToString()), 2);
                 decimal IUE = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(i, 12).Value.ToString()), 2);
-                decimal IT = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(i, 13).Value.ToString()), 2);
-                decimal total = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(i, 14).Value.ToString()), 2);
-
+                decimal IT = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(i, 13).Value.ToString()), 2);                
+                decimal total = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(i, 14).Value.ToString()), 2);                
                 if (contrato - IUE - IT != total)
                 {
                     res = false;

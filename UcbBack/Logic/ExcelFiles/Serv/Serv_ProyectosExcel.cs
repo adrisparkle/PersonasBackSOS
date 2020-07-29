@@ -8,6 +8,11 @@ using UcbBack.Logic.B1;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
 using UcbBack.Models.Serv;
+using System.Configuration;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
+using System.Globalization;
+using System.Data.Entity;
+using Newtonsoft.Json.Linq;
 
 namespace UcbBack.Logic.ExcelFiles.Serv
 {
@@ -107,19 +112,19 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                 var pei = connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<String>().ToList();
                 bool v3 = VerifyColumnValueIn(4, pei, comment: "Este PEI no existe en SAP.");
                 bool v4 = VerifyLength(5, 50);
-                bool v5 = verifyproject();
-
+                bool v5 = verifyproject(dependency:3);
                 var periodo = connB1.getCostCenter(B1Connection.Dimension.Periodo).Cast<string>().ToList();
                 bool v6 = VerifyColumnValueIn(9, periodo, comment: "Este Periodo no existe en SAP.");
-
                 bool v7 = VerifyColumnValueIn(10, new List<string> { "PROF", "TG", "REL", "LEC", "REV", "PAN", "OTR" }, comment: "No existe este tipo de Tarea Asignada.");
                 bool v8 = VerifyColumnValueIn(11, new List<string> { "CC_POST", "CC_EC", "CC_FC", "CC_INV", "CC_SA" }, comment: "No existe este tipo de Cuenta Asignada.");
-
+                //Nueva validación para comprobar que la cuenta asignada corresponde al proyecto
                 bool v9 = true;
                 foreach (var i in new List<int>(){1,2,3,4,5  ,7  ,9,10,11,12,13,14,15})
                 {
                     v9 = VerifyNotEmpty(i) && v9;
                 }
+                bool v10 = verifyAccounts(dependency:3);
+                bool v11 = verifyDates(dependency: 3);
 
                 return v1 && v2 && v3 && v4 && v5 && v6 && v7 && v8 && v9;
             }
@@ -128,23 +133,27 @@ namespace UcbBack.Logic.ExcelFiles.Serv
 
         }
 
-        private bool verifyproject(int sheet = 1)
+        private bool verifyproject(int dependency, int sheet = 1)
         {
             string commnet = "Este proyecto no existe en SAP.";
             var connB1 = B1Connection.Instance();
             var br = _context.Branch.FirstOrDefault(x => x.Id == process.BranchesId);
-            var list = connB1.getProjects("*").Where(x => x.U_Sucursal == br.Abr).Select(x => x.PrjCode).ToList();
+            var list = connB1.getProjects("*").Where(x => x.U_Sucursal == br.Abr).Select(x => new { x.PrjCode, x.U_UORGANIZA }).ToList();
             int index = 6;
             int tipoproy = 11;
             bool res = true;
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
-            var l = UsedRange.LastRow().RowNumber();
+            
             for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
             {
-                if (!list.Exists(x => string.Equals(x.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
+                var strproject = index != -1 ? wb.Worksheet(sheet).Cell(i, index).Value.ToString() : null;
+                var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
+                var dep = _context.Dependencies.Where(x => x.BranchesId == br.Id).Include(x => x.OrganizationalUnit).FirstOrDefault(x => x.Cod == strdependency);
+                //------------------------------------Valida existencia del proyecto--------------------------------
+                //Si no existe en esta rama un proyecto que haga match con el proyecto del excel
+                if (!list.Exists(x => string.Equals(x.PrjCode.ToString(), strproject, StringComparison.OrdinalIgnoreCase)))
                 {
-                    var a1 = wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString();
-                    var a2 = wb.Worksheet(sheet).Cell(i, index).Value.ToString();
+                    //Si el tipo de proyecto, no es de los siguientes tipos y el codigo del proyecto no viene vacío
                     if (!(
                         (
                             wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "CC_EC"
@@ -159,11 +168,139 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                         paintXY(index, i, XLColor.Red, commnet);
                     }
                 }
+                else
+                {
+                    //como ya sabemos que existe el proyecto, ahora preguntamos de la UO
+                    //dep es de la celda correcta
+                    var row = list.FirstOrDefault(x => x.PrjCode == strproject);
+                    string UO = row.U_UORGANIZA.ToString();
+                    string UOName = _context.OrganizationalUnits.FirstOrDefault(x => x.Cod == UO).Name;
+                    if (!string.Equals(dep.OrganizationalUnit.Cod.ToString(), row.U_UORGANIZA.ToString(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        //Si la UO para esta fila es diferente de la UO registrada en SAP, marcamos error
+                        res = false;
+                        paintXY(dependency, i, XLColor.Red, "Este proyecto debe tener una dependencia asociada a la Unidad Org: " + row.U_UORGANIZA + " " + UOName);
+                    }
+
+                }
             }
             valid = valid && res;
             if (!res)
-                addError("Valor no valido", "Valor o valores no validos en la columna: " + index, false);
+            {
+                addError("Valor no valido", "Proyecto o proyectos no validos en la columna: " + index, false);
+            }
+            
             return res;
         }
+
+       private bool verifyAccounts(int dependency, int sheet = 1)
+       {
+           string commnet;//especifica el error
+           var connB1 = B1Connection.Instance();
+           var br = _context.Branch.FirstOrDefault(x => x.Id == process.BranchesId);
+           //todos los proyectos de esa rama
+           var list = connB1.getProjects("*").Where(x => x.U_Sucursal == br.Abr).Select(x => new { x.PrjCode, x.U_Tipo, x.ValidFrom, x.ValidTo, x.U_UORGANIZA }).ToList();
+           //columnas del excel
+           int index = 6;
+           int tipoProyecto = 11;
+           bool res = true;
+           int badAccount = 0;
+           int badType = 0;
+           IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+           for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+           {
+               if (list.Exists(x => string.Equals(x.PrjCode.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
+               {
+                   var strproject = index != -1 ? wb.Worksheet(sheet).Cell(i, index).Value.ToString() : null;
+                   var row = list.FirstOrDefault(x => x.PrjCode == strproject);
+                   string UO = row.U_UORGANIZA.ToString();
+                   var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
+                   var dep = _context.Dependencies.Where(x => x.BranchesId == br.Id).Include(x => x.OrganizationalUnit).FirstOrDefault(x => x.Cod == strdependency);
+                   //Si la UO hace match también
+                   if(row.U_UORGANIZA==dep.OrganizationalUnit.Cod){
+                    //-----------------------------Validaciones de la cuenta--------------------------------
+                   var projectAccount = wb.Worksheet(sheet).Cell(i, tipoProyecto).Value.ToString();
+                   var projectType = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().U_Tipo.ToString();//tipo de proyecto del proyecto en la celda
+                   string tipo = projectType;//variable auxiliar, no puede usarse la de arriba en EF por ser dinámica
+                   var typeExists = _context.TableOfTableses.ToList().Exists(x => string.Equals(x.Type, tipo, StringComparison.OrdinalIgnoreCase));
+                       //el tipo de proyecto existe en nuestra tabla de tablas?
+                       if (!typeExists)
+                       {
+                           commnet = "El tipo de proyecto no es válido";
+                           paintXY(index, i, XLColor.Red, commnet);
+                           res = false;
+                           badType++;
+                       }
+                       else
+                       {
+                           var assignedAccount = _context.TableOfTableses.Where(x => x.Type == tipo).Where(x => x.Id >= 24 && x.Id<29).FirstOrDefault().Value.ToString();//la cuenta asignada a ese tipo de proyecto
+                           if (projectAccount != assignedAccount)
+                           {
+                               commnet = "La cuenta asignada es incorrecta, debería ser: " + assignedAccount;
+                               paintXY(tipoProyecto, i, XLColor.Red, commnet);
+                               res = false;
+                               badAccount++;
+                           }
+                       }
+                   }
+                   
+               }
+           }
+           valid = valid && res;
+           if (!res && badAccount > 0 && badType > 0) { addError("Valor no valido", "Tipos de proyectos no válidos en la columna: " + index + " y cuentas asignadas no válidas en la columna: " + tipoProyecto, false); }
+           else if (!res && badAccount > 0 && badType == 0) { addError("Valor no valido", "Cuentas asignadas no válidas en la columna: " + tipoProyecto, false); }
+           else if (!res && badAccount == 0 && badType > 0) { addError("Valor no valido", "Tipos de proyectos no válidos en la columna: " + index, false); }
+           
+           return res;
+       }
+
+       private bool verifyDates(int dependency, int sheet = 1)
+       {
+           string commnet;//especifica el error
+           var connB1 = B1Connection.Instance();
+           var br = _context.Branch.FirstOrDefault(x => x.Id == process.BranchesId);
+           //todos los proyectos de esa rama
+           var list = connB1.getProjects("*").Where(x => x.U_Sucursal == br.Abr).Select(x => new { x.PrjCode, x.U_Tipo, x.ValidFrom, x.ValidTo, x.U_UORGANIZA }).ToList();
+           //columnas del excel
+           int index = 6;
+           bool res = true;
+           IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+           var l = UsedRange.LastRow().RowNumber();
+
+           for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+           {
+               if (list.Exists(x => string.Equals(x.PrjCode.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
+               {
+                   var strproject = index != -1 ? wb.Worksheet(sheet).Cell(i, index).Value.ToString() : null;
+                   var row = list.FirstOrDefault(x => x.PrjCode == strproject);
+                   string UO = row.U_UORGANIZA.ToString();
+                   var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
+                   var dep = _context.Dependencies.Where(x => x.BranchesId == br.Id).Include(x => x.OrganizationalUnit).FirstOrDefault(x => x.Cod == strdependency);
+                   //Si la UO hace match también
+                   if(row.U_UORGANIZA==dep.OrganizationalUnit.Cod){
+                       //-----------------------------Validaciones de la fecha del proyecto--------------------------------
+                       var projectInitialDate = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().ValidFrom.ToString();
+                       DateTime parsedIni = Convert.ToDateTime(projectInitialDate);
+                       var projectFinalDate = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().ValidTo.ToString();
+                       DateTime parsedFin = Convert.ToDateTime(projectFinalDate);
+
+                       //si el tiempo actual es menor al inicio del proyecto en SAP ó si el tiempo actual es mayor a la fecha límite del proyectoSAP
+                       if (System.DateTime.Now < parsedIni || System.DateTime.Now > parsedFin)
+                       {
+                           res = false;
+                           commnet = "La fecha de este proyecto ya está cerrada, estuvo disponible del " + parsedIni + " al " + parsedFin;
+                           paintXY(index, i, XLColor.Red, commnet);
+                       }
+                   }
+               }
+           }
+           valid = valid && res;
+           if (!res) { addError("Valor no valido", "Proyecto/s con fechas no válidas en la columna:" + index, false); }
+
+           return res;
+       }
+
+
+      
     }
 }

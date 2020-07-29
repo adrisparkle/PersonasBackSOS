@@ -26,7 +26,7 @@ namespace UcbBack.Logic.B1
     public class B1Connection
     {
         private static object Lock = new Object();
-        private static B1Connection instance=null;
+        private static B1Connection instance = null;
         private struct BusinessObjectType
         {
             public static string BussinesPartner = "BUSINESSPARTNER";
@@ -41,8 +41,8 @@ namespace UcbBack.Logic.B1
         private int errorCode = 0;
         private string errorMessage = "";
         private string DatabaseName;
-        public bool connectedtoHana=false;
-        public bool connectedtoB1=false;
+        public bool connectedtoHana = false;
+        public bool connectedtoB1 = false;
         private ApplicationDbContext _context;
 
         public enum Dimension
@@ -95,7 +95,7 @@ namespace UcbBack.Logic.B1
         // Double Check locking implementation for thread safe singleton
         public static B1Connection Instance()
         {
-            if(instance == null) // 1st check
+            if (instance == null) // 1st check
             {
                 lock (Lock) // locked
                 {
@@ -149,12 +149,12 @@ namespace UcbBack.Logic.B1
 
             connectionResult = company.Connect();
             var x = company.Connected;
-        if (connectionResult != 0)
+            if (connectionResult != 0)
             {
                 company.GetLastError(out errorCode, out errorMessage);
             }
             return connectionResult;
-        }  
+        }
 
         public bool TestHanaConection()
         {
@@ -179,7 +179,7 @@ namespace UcbBack.Logic.B1
             return resultado;
         }
 
-        private B1SDKLog initLog(int userId,string type,string ObjectId)
+        private B1SDKLog initLog(int userId, string type, string ObjectId)
         {
             B1SDKLog log = new B1SDKLog();
             log.Id = B1SDKLog.GetNextId(_context);
@@ -190,7 +190,7 @@ namespace UcbBack.Logic.B1
             return log;
         }
 
-        public string updatePersonToEmployeeMasterData(int UserId, People person)
+        public string updatePersonToEmployeeMasterData(int UserId, People person, string position)
         {
             var log = initLog(UserId, BusinessObjectType.Employee, person.Id.ToString());
             try
@@ -211,6 +211,8 @@ namespace UcbBack.Logic.B1
                     oEmployeesInfo.IdNumber = person.Document;
                     //oEmployeesInfo.Department = Int32.Parse(person.GetLastContract().Dependency.Cod);
                     oEmployeesInfo.Active = BoYesNoEnum.tYES;
+                    // set Job Title
+                    oEmployeesInfo.JobTitle = position;
 
                     // set Branch Code
 
@@ -228,8 +230,8 @@ namespace UcbBack.Logic.B1
                     var ou = person.GetLastContract();
                     oEmployeesInfo.UserFields.Fields.Item("U_UnidadOrg").Value = ou.Dependency.OrganizationalUnit.Cod;
                     oEmployeesInfo.UserFields.Fields.Item("U_Cod_SN").Value = "R" + person.CUNI;
-                    if(person.SecondSurName!=null)
-                    oEmployeesInfo.UserFields.Fields.Item("U_ApMaterno").Value = person.SecondSurName;
+                    if (person.SecondSurName != null)
+                        oEmployeesInfo.UserFields.Fields.Item("U_ApMaterno").Value = person.SecondSurName;
 
                     oEmployeesInfo.Update();
                     string newKey = company.GetNewObjectKey();
@@ -285,9 +287,9 @@ namespace UcbBack.Logic.B1
             }
         }
 
-        public string addPersonToEmployeeMasterData(int UserId,People person)
+        public string addPersonToEmployeeMasterData(int UserId, People person, string position)
         {
-            var log = initLog(UserId,BusinessObjectType.Employee,person.Id.ToString());
+            var log = initLog(UserId, BusinessObjectType.Employee, person.Id.ToString());
             try
             {
                 if (company.Connected)
@@ -305,8 +307,9 @@ namespace UcbBack.Logic.B1
                     oEmployeesInfo.Active = BoYesNoEnum.tYES;
                     var ou = person.GetLastContract();
                     oEmployeesInfo.UserFields.Fields.Item("U_UnidadOrg").Value = ou.Dependency.OrganizationalUnit.Cod;
-                    oEmployeesInfo.UserFields.Fields.Item("U_Cod_SN").Value = "R"+person.CUNI;
-
+                    oEmployeesInfo.UserFields.Fields.Item("U_Cod_SN").Value = "R" + person.CUNI;
+                    // set Job Title
+                    oEmployeesInfo.JobTitle = position;
                     // set Branch Code
                     oEmployeesInfo.EmployeeBranchAssignment.BPLID = Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
                     oEmployeesInfo.EmployeeBranchAssignment.Add();
@@ -339,7 +342,7 @@ namespace UcbBack.Logic.B1
                         _context.SdkErrorLogs.Add(log);
                         _context.SaveChanges();
                         return newKey;
-                    }  
+                    }
                 }
                 log.Success = false;
                 log.ErrorMessage = "SDK: Not Connected";
@@ -356,7 +359,7 @@ namespace UcbBack.Logic.B1
                 // Get the line number from the stack frame
                 var line = frame.GetFileLineNumber();
                 log.Success = false;
-                log.ErrorMessage = "Catch: "+ex.Message + " At line: "+line;
+                log.ErrorMessage = "Catch: " + ex.Message + " At line: " + line;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
                 if (company.InTransaction)
@@ -384,7 +387,7 @@ namespace UcbBack.Logic.B1
                 {
                     company.StartTransaction();
                     SAPbobsCOM.BusinessPartners businessObject =
-                        (SAPbobsCOM.BusinessPartners) company.GetBusinessObject(SAPbobsCOM.BoObjectTypes
+                        (SAPbobsCOM.BusinessPartners)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes
                             .oBusinessPartners);
                     //if person exist as BusinesPartner
                     if (businessObject.GetByKey(this.BPClientPrefix + person.CUNI))
@@ -420,7 +423,7 @@ namespace UcbBack.Logic.B1
                         //    businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
                         //    businessObject.BPBranchAssignment.Add();
                         //}
-                        
+
                         businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
                         var BR_COD_SAP = _context.Branch.FirstOrDefault(x => x.Id == contract.Dependency.BranchesId)
                             .CodigoSAP;
@@ -614,7 +617,7 @@ namespace UcbBack.Logic.B1
                         businessObject.LinkedBusinessPartner = this.BPClientPrefix + person.CUNI;
                         string currency = businessObject.Currency;
                         businessObject.Currency = currency;
-                        
+
                         // set NIT
                         businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
                         // Set Group RRHH
@@ -644,7 +647,7 @@ namespace UcbBack.Logic.B1
                         //    //businessObject.BPBranchAssignment.Delete();
                         //    businessObject.BPBranchAssignment.Add();
                         //}
-                        
+
                         // If only one Branch
                         businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
                         businessObject.BPBranchAssignment.BPLID = Int32.Parse(contract.Branches.CodigoSAP);
@@ -839,24 +842,24 @@ namespace UcbBack.Logic.B1
             return res.Count() > 0;
         }
 
-        public string AddOrUpdatePerson(int UserId, People person, bool update = true)
+        public string AddOrUpdatePerson(int UserId, People person, string position, bool update = true)
         {
             string res = "";
             res = AddOrUpdatePersonToBusinessPartner(UserId, person, update: update);
-            res += AddOrUpdatePersonToRRHH(UserId, person, update: update);
+            res += AddOrUpdatePersonToRRHH(UserId, person, position, update: update);
             res += AddOrUpdatePersonToBusinessPartnerSUPPLIER(UserId, person, update: update);
             return res;
         }
 
-        public string AddOrUpdatePersonToRRHH(int UserId, People person, bool update = true)
+        public string AddOrUpdatePersonToRRHH(int UserId, People person, string position, bool update = true)
         {
             if (!PersonExistsAsRRHH(person))
             {
-                return addPersonToEmployeeMasterData(UserId, person);
+                return addPersonToEmployeeMasterData(UserId, person, position);
             }
             else if (update)
             {
-                return updatePersonToEmployeeMasterData(UserId, person);
+                return updatePersonToEmployeeMasterData(UserId, person, position);
             }
             else return "Exist not created";
         }
@@ -865,7 +868,7 @@ namespace UcbBack.Logic.B1
         {
             if (!PersonExistsAsBusinessPartner(person))
             {
-                return addpersonToBussinesPartner(UserId,person);
+                return addpersonToBussinesPartner(UserId, person);
             }
             else if (update)
             {
@@ -936,11 +939,11 @@ namespace UcbBack.Logic.B1
                                                                                         ") V " +
                                                                                         "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\";";
                 IEnumerable<SapVoucher> dist = _context.Database.SqlQuery<SapVoucher>(query).ToList();
-                 var Auxdate = new DateTime(
-                    Int32.Parse(process.gestion),
-                    Int32.Parse(process.mes) > 12 ? (Int32.Parse(process.mes) - 12) : Int32.Parse(process.mes),
-                    DateTime.DaysInMonth(Int32.Parse(process.gestion), Int32.Parse(process.mes) > 12 ? (Int32.Parse(process.mes) - 12) : Int32.Parse(process.mes))
-                );
+                var Auxdate = new DateTime(
+                   Int32.Parse(process.gestion),
+                   Int32.Parse(process.mes) > 12 ? (Int32.Parse(process.mes) - 12) : Int32.Parse(process.mes),
+                   DateTime.DaysInMonth(Int32.Parse(process.gestion), Int32.Parse(process.mes) > 12 ? (Int32.Parse(process.mes) - 12) : Int32.Parse(process.mes))
+               );
                 var debe = dist.Sum(x => decimal.Parse(x.Debit));
                 var haber = dist.Sum(x => decimal.Parse(x.Credit));
                 if (debe != haber)
@@ -957,21 +960,21 @@ namespace UcbBack.Logic.B1
                 // If process Date is null set last day of the month in proccess
                 DateTime date = process.RegisterDate == null ? Auxdate : process.RegisterDate.Value;
 
-                if (company.Connected && dist.Count()>0 && verifyAccounts(UserId,process.Id.ToString(),dist))
+                if (company.Connected && dist.Count() > 0 && verifyAccounts(UserId, process.Id.ToString(), dist))
                 {
                     company.StartTransaction();
                     var dist1 = dist.GroupBy(g => new
-                        {
-                            g.AccountCode,
-                            g.ShortName,
-                            g.CostingCode,
-                            g.CostingCode2,
-                            g.CostingCode3,
-                            g.CostingCode4,
-                            g.CostingCode5,
-                            g.ProjectCode,
-                            g.BPLId
-                        })
+                    {
+                        g.AccountCode,
+                        g.ShortName,
+                        g.CostingCode,
+                        g.CostingCode2,
+                        g.CostingCode3,
+                        g.CostingCode4,
+                        g.CostingCode5,
+                        g.ProjectCode,
+                        g.BPLId
+                    })
                         .Select(g => new
                         {
                             g.Key.AccountCode,
@@ -1013,7 +1016,7 @@ namespace UcbBack.Logic.B1
                                 break;
                         }
                         string strMemo = "Planilla Sueldos y Salarios " + process.Branches.Abr + "-" + strmes + "-" + process.gestion;
-                        businessObject.Memo = strMemo.Substring(0,strMemo.Length<50?strMemo.Length:49);
+                        businessObject.Memo = strMemo.Substring(0, strMemo.Length < 50 ? strMemo.Length : 49);
                         businessObject.TaxDate = date;
                         businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
                         businessObject.DueDate = date;
@@ -1086,7 +1089,7 @@ namespace UcbBack.Logic.B1
                             businessObject.JournalEntries.Lines.Debit = line.Debit;
                             if (line.ShortName != null)
                                 businessObject.JournalEntries.Lines.ShortName = line.ShortName;
-                            if(line.CostingCode == null)
+                            if (line.CostingCode == null)
                                 businessObject.JournalEntries.Lines.CostingCode = line.CostingCode;
 
                             businessObject.JournalEntries.Lines.CostingCode = line.CostingCode;
@@ -1146,22 +1149,22 @@ namespace UcbBack.Logic.B1
             }
         }
 
-        private string CleanAndTrunk(string text,int size)
+        private string CleanAndTrunk(string text, int size)
         {
             //remove special chars
             var goodText = Regex.Replace(text, "[^0-9A-Za-z ,-]", "");
             //remove new line characters
             goodText = Regex.Replace(goodText, @"\n|\r", "");
-            return goodText.Substring(0,goodText.Length > size ? size : goodText.Length);
+            return goodText.Substring(0, goodText.Length > size ? size : goodText.Length);
         }
 
-        public string addServVoucher(int UserId, List<Serv_Voucher> voucher,ServProcess process)
+        public string addServVoucher(int UserId, List<Serv_Voucher> voucher, ServProcess process)
         {
             var log = initLog(UserId, BusinessObjectType.Voucher, voucher.FirstOrDefault().Memo);
             bool approved = true;
             try
             {
-                
+
                 var debe = voucher.Sum(x => x.Debit);
                 var haber = voucher.Sum(x => x.Credit);
                 if (debe != haber)
@@ -1177,73 +1180,74 @@ namespace UcbBack.Logic.B1
 
                 // If process Date is null set last day of the month in proccess
                 DateTime date = process.InSAPAt == null ? DateTime.Now : process.InSAPAt.Value;
+                if (approved)
+                {
+                    SAPbobsCOM.JournalEntries businessObject =
+                        (SAPbobsCOM.JournalEntries)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes
+                            .oJournalEntries);
 
-                    if (approved)
+                    // add header Journal Entrie Approved:
+                    businessObject.ReferenceDate = date;
+
+                    //businessObject.Memo = CleanAndTrunk(voucher.FirstOrDefault().Memo, 49); ya no se usará. Se conserva xceacaso
+                    businessObject.Memo = voucher.FirstOrDefault().Memo;
+                    businessObject.TaxDate = date;
+                    businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
+                    businessObject.DueDate = date;
+
+
+                    // add lines Journal Entrie Approved:
+                    businessObject.Lines.SetCurrentLine(0);
+                    foreach (var line in voucher)
                     {
-                        SAPbobsCOM.JournalEntries businessObject =
-                            (SAPbobsCOM.JournalEntries) company.GetBusinessObject(SAPbobsCOM.BoObjectTypes
-                                .oJournalEntries);
-
-                        // add header Journal Entrie Approved:
-                        businessObject.ReferenceDate = date;
-
-                        businessObject.Memo = CleanAndTrunk(voucher.FirstOrDefault().Memo,49);
-                        businessObject.TaxDate = date;
-                        businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
-                        businessObject.DueDate = date;
-
-
-                        // add lines Journal Entrie Approved:
-                        businessObject.Lines.SetCurrentLine(0);
-                        foreach (var line in voucher)
-                        {
-                            // var xx = CleanAndTrunk(line.LineMemo,49);
-                            businessObject.Lines.LineMemo = CleanAndTrunk(line.LineMemo,49);
-                            businessObject.Lines.AccountCode = this.getAccountId(line.Account);
-                            businessObject.Lines.Credit = (double)line.Credit;
-                            businessObject.Lines.Debit = (double)line.Debit;
-                            if (line.CardCode != null)
-                                businessObject.Lines.ShortName = line.CardCode;
-                            businessObject.Lines.CostingCode = line.OU;
-                            businessObject.Lines.CostingCode2 = line.PEI;
-                            businessObject.Lines.CostingCode3 = line.Carrera;
-                            businessObject.Lines.CostingCode4 = line.Paralelo;
-                            businessObject.Lines.CostingCode5 = line.Periodo;
-                            businessObject.Lines.ProjectCode = line.ProjectCode;
-                            businessObject.Lines.BPLID = Int32.Parse(process.Branches.CodigoSAP);
-                            businessObject.Lines.Add();
-                        }
-
-                        businessObject.Add();
-                        company.GetLastError(out errorCode, out errorMessage);
-                        if (errorCode != 0)
-                        {
-                            log.Success = false;
-                            log.ErrorCode = errorCode.ToString();
-                            log.ErrorMessage = "SDK: " + errorMessage;
-                            _context.SdkErrorLogs.Add(log);
-                            _context.SaveChanges();
-                            return "ERROR";
-                        }
-                        else
-                        {
-                            if (company.InTransaction)
-                            {
-                                company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
-                                
-                            }
-                            string newKey = company.GetNewObjectKey();
-
-
-                            newKey = newKey.Replace("\t1", "");
-                            process.SAPId = newKey;
-                            _context.ServProcesses.AddOrUpdate(process);
-                            _context.SdkErrorLogs.Add(log);
-                            _context.SaveChanges();
-                            return newKey;
-                        }
+                        // var xx = CleanAndTrunk(line.LineMemo,49); comentado adrian
+                        businessObject.Lines.LineMemo = line.LineMemo;
+                        //businessObject.Lines.LineMemo = CleanAndTrunk(line.LineMemo, 49); ya no se usará. Se conserva xceacaso
+                        businessObject.Lines.AccountCode = this.getAccountId(line.Account);
+                        businessObject.Lines.Credit = (double)line.Credit;
+                        businessObject.Lines.Debit = (double)line.Debit;
+                        if (line.CardCode != null)
+                            businessObject.Lines.ShortName = line.CardCode;
+                        businessObject.Lines.CostingCode = line.OU;
+                        businessObject.Lines.CostingCode2 = line.PEI;
+                        businessObject.Lines.CostingCode3 = line.Carrera;
+                        businessObject.Lines.CostingCode4 = line.Paralelo;
+                        businessObject.Lines.CostingCode5 = line.Periodo;
+                        businessObject.Lines.ProjectCode = line.ProjectCode;
+                        businessObject.Lines.BPLID = Int32.Parse(process.Branches.CodigoSAP);
+                        businessObject.Lines.Add();
                     }
-                
+
+                    businessObject.Add();
+                    company.GetLastError(out errorCode, out errorMessage);
+                    if (errorCode != 0)
+                    {
+                        log.Success = false;
+                        log.ErrorCode = errorCode.ToString();
+                        log.ErrorMessage = "SDK: " + errorMessage;
+                        _context.SdkErrorLogs.Add(log);
+                        _context.SaveChanges();
+                        return "ERROR";
+                    }
+                    else
+                    {
+                        if (company.InTransaction)
+                        {
+                            company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
+
+                        }
+                        string newKey = company.GetNewObjectKey();
+
+
+                        newKey = newKey.Replace("\t1", "");
+                        process.SAPId = newKey;
+                        _context.ServProcesses.AddOrUpdate(process);
+                        _context.SdkErrorLogs.Add(log);
+                        _context.SaveChanges();
+                        return newKey;
+                    }
+                }
+
                 log.Success = false;
                 log.ErrorMessage = "SDK: Not Connected or Voucher/Journal Entrie Data Error";
                 _context.SdkErrorLogs.Add(log);
@@ -1261,17 +1265,17 @@ namespace UcbBack.Logic.B1
             }
         }
 
-        public bool verifyAccounts(int UserId, string processId,IEnumerable<SapVoucher> lines)
+        public bool verifyAccounts(int UserId, string processId, IEnumerable<SapVoucher> lines)
         {
             foreach (var line in lines)
             {
-                if (!checkVoucherAccount(UserId,processId,line,addErrorLog:true))
+                if (!checkVoucherAccount(UserId, processId, line, addErrorLog: true))
                     return false;
             }
             return true;
         }
 
-        public bool checkVoucherAccount(int UserId,string processId, SapVoucher line,List<OACT> oact=null, bool addErrorLog=false)
+        public bool checkVoucherAccount(int UserId, string processId, SapVoucher line, List<OACT> oact = null, bool addErrorLog = false)
         {
             bool res = true;
             OACT Uoact = null;
@@ -1301,7 +1305,7 @@ namespace UcbBack.Logic.B1
                 }
             }
             //check Dim1
-            if(Uoact.Dim1Relvnt=="Y" && line.CostingCode.IsNullOrWhiteSpace())
+            if (Uoact.Dim1Relvnt == "Y" && line.CostingCode.IsNullOrWhiteSpace())
             {
                 res = false;
                 if (addErrorLog)
@@ -1314,7 +1318,7 @@ namespace UcbBack.Logic.B1
                 }
             }
             //check Dim2
-            if(Uoact.Dim2Relvnt=="Y" && line.CostingCode2.IsNullOrWhiteSpace())
+            if (Uoact.Dim2Relvnt == "Y" && line.CostingCode2.IsNullOrWhiteSpace())
             {
                 res = false;
                 if (addErrorLog)
@@ -1327,7 +1331,7 @@ namespace UcbBack.Logic.B1
                 }
             }
             //check Dim3
-            if(Uoact.Dim3Relvnt=="Y" && line.CostingCode3.IsNullOrWhiteSpace())
+            if (Uoact.Dim3Relvnt == "Y" && line.CostingCode3.IsNullOrWhiteSpace())
             {
                 res = false;
                 if (addErrorLog)
@@ -1340,7 +1344,7 @@ namespace UcbBack.Logic.B1
                 }
             }
             //check Dim4
-            if(Uoact.Dim4Relvnt=="Y" && line.CostingCode4.IsNullOrWhiteSpace())
+            if (Uoact.Dim4Relvnt == "Y" && line.CostingCode4.IsNullOrWhiteSpace())
             {
                 res = false;
                 if (addErrorLog)
@@ -1353,7 +1357,7 @@ namespace UcbBack.Logic.B1
                 }
             }
             //check Dim5
-            if(Uoact.Dim5Relvnt=="Y" && line.CostingCode5.IsNullOrWhiteSpace())
+            if (Uoact.Dim5Relvnt == "Y" && line.CostingCode5.IsNullOrWhiteSpace())
             {
                 res = false;
                 if (addErrorLog)
@@ -1366,7 +1370,7 @@ namespace UcbBack.Logic.B1
                 }
             }
             //check Associate Account
-            if((Uoact.LocManTran=="Y" && line.ShortName.IsNullOrWhiteSpace())
+            if ((Uoact.LocManTran == "Y" && line.ShortName.IsNullOrWhiteSpace())
                || (Uoact.LocManTran == "N" && !line.ShortName.IsNullOrWhiteSpace()))
             {
                 res = false;
@@ -1383,7 +1387,7 @@ namespace UcbBack.Logic.B1
             return res;
         }
 
-        public List<dynamic> getBusinessPartners(string col = "CardCode", CustomUser user=null, Branches branch=null)
+        public List<dynamic> getBusinessPartners(string col = "CardCode", CustomUser user = null, Branches branch = null)
         {
             List<dynamic> res = new List<dynamic>();
             string[] cols = new string[]
@@ -1397,7 +1401,7 @@ namespace UcbBack.Logic.B1
 
             foreach (var column in cols)
             {
-                strcol += (first ? "" : ",") + "a."+column;
+                strcol += (first ? "" : ",") + "a." + column;
                 first = false;
             }
 
@@ -1511,7 +1515,7 @@ namespace UcbBack.Logic.B1
             string[] dim1cols = new string[]
             {
                 "\"PrjCode\"", "\"PrjName\"", "\"Locked\"", "\"DataSource\"", "\"ValidFrom\"",
-                "\"ValidTo\"", "\"Active\"", "\"U_ModalidadProy\"", "\"U_Sucursal\"", "\"U_Tipo\""
+                "\"ValidTo\"", "\"Active\"", "\"U_ModalidadProy\"", "\"U_Sucursal\"", "\"U_Tipo\"", "\"U_UORGANIZA\""
             };
 
             string strcol = "";
@@ -1547,12 +1551,12 @@ namespace UcbBack.Logic.B1
                     }
                 }
             }
-            
+
             return res;
         }
-        
 
-        public List<dynamic> getCostCenter(Dimension dimesion,string mes=null,string gestion=null, string col = "PrcCode")
+
+        public List<dynamic> getCostCenter(Dimension dimesion, string mes = null, string gestion = null, string col = "PrcCode")
         {
             List<dynamic> res = new List<dynamic>();
             if (connectedtoHana)
@@ -1569,13 +1573,20 @@ namespace UcbBack.Logic.B1
 
                 string strcol = "";
                 bool first = true;
-
+                //arma los datos para el select según la dimensión
                 foreach (var column in dim1cols[(int)dimesion])
                 {
                     strcol += (first ? "" : ",") + column;
                     first = false;
                 }
-
+                /*si la dimension es 0, select todo-> revisar que el mes sea diferente de la gestion, si lo fuera-> busca proyectos que tengan el 1ro de enero entre sus fechas válidas
+                 *  o que la primera fecha para la gestion y el mes sea mayor al VF y el VT es nulo
+                 *  si el mes es igual a la gestión-> no hay where
+                 si la dimensión no es 0 -> busca la dimension solicitada y los proyectos segun el mes y gestion entre fechas validas
+                    el caso de VT nulo
+                    si el mes es igual a la gestión->busca proyectos por dimension nada más*/
+                
+                //por qué el mes sería igual a la gestión? por si el mes y la gestion no se envían como parámetros -->llegan como null
                 string where = (int)dimesion == 0
                     ? ((mes != gestion) ? " where ('2018-02-01 01:00:00' " +
                       "between \"ValidFrom\" and \"ValidTo\")" +
@@ -1587,6 +1598,7 @@ namespace UcbBack.Logic.B1
                       "or ('2018-02-01 01:00:00' > \"ValidFrom\" " +
                       "and \"ValidTo\" is null))" : " where \"DimCode\"=" + (int)dimesion);
                 string query = "Select " + strcol + " from " + DatabaseName + ".OPRC" + where;
+                //ejecuta el query dinámico
                 HanaCommand command = new HanaCommand(query, HanaConn);
                 HanaDataReader dataReader = command.ExecuteReader();
 
@@ -1608,24 +1620,31 @@ namespace UcbBack.Logic.B1
                     }
                 }
             }
-
+            //devuelve lista dinámica con los elementos del query
             return res;
         }
 
         public List<object> getParalels()
         {
-            List<object> list = new List<object>();
+            List<dynamic> list = new List<dynamic>();
+            
             if (connectedtoHana)
             {
-                string query = "select a.\"PrcCode\", a.\"U_PeriodoPARALELO\", a.\"U_Sigla\", a.\"U_Paralelo\", b.\"CODUNIDADORGANIZACIONAL\" "
+                string query = "select a.\"PrcCode\", a.\"U_PeriodoPARALELO\", a.\"U_Sigla\", a.\"U_Paralelo\", b.\"CODUNIDADORGANIZACIONAL\", b.\"UNIDAD_AUXILIAR\", "
+                + "case "
+                + "when \"PrcCode\" like 'D%' then 'TEO' "
+                + "when \"PrcCode\" like 'T%' then 'TJA' "
+                + "when \"PrcCode\" like 'E%' then 'EPC' "
+                + "when \"PrcCode\" like 'L%' then 'LPZ' "
+                + "when \"PrcCode\" like 'C%' then 'CBB' "
+                + "when \"PrcCode\" like 'S%' then 'SCZ' "
+                + "when \"PrcCode\" like 'U%' then 'UCE' "
+                + "end as \"Segmento\" "
                 + "from ucatolica.oprc a "
                 + "inner join admnal.\"T_REG_PARALELOS\" b "
-                + " on a.\"PrcCode\" = b.\"CODIGOSAP\""
-                + " WHERE a.\"DimCode\" = " + 4 ;
+                + "on a.\"PrcCode\" = b.\"CODIGOSAP\" "
+                + "WHERE a.\"DimCode\" = " + 4;
 
-                /*string query = "select \"PrcCode\", \"U_PeriodoPARALELO\", \"U_Sigla\", \"U_Paralelo\""
-                               + "from " + DatabaseName + ".oprc"
-                               + " WHERE \"DimCode\" = " + 4;*/
                 HanaCommand command = new HanaCommand(query, HanaConn);
                 HanaDataReader dataReader = command.ExecuteReader();
 
@@ -1639,6 +1658,43 @@ namespace UcbBack.Logic.B1
                         o.sigla = dataReader["U_Sigla"].ToString();
                         o.paralelo = dataReader["U_Paralelo"].ToString();
                         o.OU = dataReader["CODUNIDADORGANIZACIONAL"].ToString();
+                        o.auxiliar = dataReader["UNIDAD_AUXILIAR"].ToString();
+                        o.segmento = dataReader["Segmento"].ToString();
+                        list.Add(o);
+                    }
+                }
+            }
+
+            return list;
+        }
+
+        public List<object> getCareers()
+        {
+            List<dynamic> list = new List<dynamic>();
+            if (connectedtoHana)
+            {
+                string query = "select a.\"PrcCode\", a.\"PrcName\", a.\"ValidFrom\", a.\"ValidTo\", a.\"U_NUM_INT_CAR\", a.\"U_Nivel\", b.\"U_CODIGO_DEPARTAMENTO\", b.\"U_CODIGO_SEGMENTO\" "
+                + "from ucatolica.oprc a "
+                + "inner join ucatolica.\"@T_GEN_CARRERAS\" b "
+                + " on a.\"PrcCode\" = b.\"U_CODIGO_CARRERA\" "
+                + " WHERE a.\"DimCode\" = " + 3;
+
+                HanaCommand command = new HanaCommand(query, HanaConn);
+                HanaDataReader dataReader = command.ExecuteReader();
+
+                if (dataReader.HasRows)
+                {
+                    while (dataReader.Read())
+                    {
+                        dynamic o = new JObject();
+                        o.cod = dataReader["PrcCode"].ToString();
+                        o.carrera = dataReader["PrcName"].ToString();
+                        o.validFrom = dataReader["ValidFrom"].ToString();
+                        o.validTo = dataReader["ValidTo"].ToString();
+                        o.num_int_car = dataReader["U_NUM_INT_CAR"].ToString();
+                        o.nivel = dataReader["U_Nivel"].ToString();
+                        o.OU = dataReader["U_CODIGO_DEPARTAMENTO"].ToString();
+                        o.segmento = dataReader["U_CODIGO_SEGMENTO"].ToString();
                         list.Add(o);
                     }
                 }

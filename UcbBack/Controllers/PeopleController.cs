@@ -22,6 +22,7 @@ using UcbBack.Logic.B1;
 using UcbBack.Logic.Mail;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 using UcbBack.Models.Not_Mapped.ViewMoldes;
+using System.Configuration;
 
 
 namespace UcbBack.Controllers
@@ -32,6 +33,8 @@ namespace UcbBack.Controllers
         private ValidatePerson validator;
         private ValidateAuth auth;
         private ADClass activeDirectory;
+        private B1Connection B1;
+
 
         public PeopleController()
         {
@@ -39,6 +42,7 @@ namespace UcbBack.Controllers
             validator = new ValidatePerson(_context);
             auth = new ValidateAuth();
             activeDirectory = new ADClass();
+            B1=B1Connection.Instance();
         }
 
         // GET api/People
@@ -347,32 +351,26 @@ namespace UcbBack.Controllers
 
 
         [System.Web.Http.HttpGet]
-        [System.Web.Http.Route("api/addalltoSAP")]
-        public IHttpActionResult addalltoSAP()
+        [System.Web.Http.Route("api/addalltoSAPNow")]
+        public IHttpActionResult addalltoSAPNow()
         {
-            var date = new DateTime(2017, 1, 1);
-            List<People> person = _context.ContractDetails.Include(x => x.People).Include(x => x.Positions).
-                Where(y => (y.EndDate > date || y.EndDate == null) && y.DependencyId==189
-                ).Select(x => x.People).Distinct().ToList();
-
-            //string query = "SELECT p.* FROM ADMNALRRHH.\"People\" p\r\ninner join ucatolica.ocrd bp\r\non concat(\'R\', p.cuni) = bp.\"CardCode\"";
-            //List<People> person = _context.Database.SqlQuery<People>(query).ToList();
-
-            //person = person.Where(x => x.CUNI == "RFA940908").ToList();
-            B1Connection b1 = B1Connection.Instance();
+            //actualiza a todas las personas de la vida para mostrar sus puestos, si no tienen la descripción en SAP
+            var posSubject = _context.Database.SqlQuery<PositionSubjectViewModel>("select lc.\"PeopleId\" as \"People_Id\",p.\"NameAbr\" as \"NameAbr\" " + 
+                                                                            "from " +ConfigurationManager.AppSettings["B1CompanyDB"]+".\"OHEM\" o "+
+                                                                            "inner join " +CustomSchema.Schema+ ".\"LASTCONTRACTS\" lc "+
+                                                                            "on o.\"ExtEmpNo\"=lc.cuni "+
+                                                                            "inner join "+CustomSchema.Schema+".\"Position\" p " +
+                                                                            "on p.\"Id\"=lc.\"PositionsId\" "+
+                                                                            "where o.\"jobTitle\" is null ;").ToList();
             var usr = auth.getUser(Request);
-            int i = 0;
-            foreach (var p in person)
+            foreach (var p in posSubject)
             {
-                i++;
-                var X = b1.AddOrUpdatePerson(usr.Id, p);
-                if (X.Contains("ERROR"))
-                {
-                    X = "";
-                }
+                var thisPerson = _context.Person.FirstOrDefault(x => x.Id == p.People_Id);
+                var result=B1.AddOrUpdatePerson(usr.Id, thisPerson, p.NameAbr);
+                p.Result = result;
             }
 
-            return Ok();
+            return Ok( posSubject );
         }
 
         [System.Web.Http.HttpGet]
