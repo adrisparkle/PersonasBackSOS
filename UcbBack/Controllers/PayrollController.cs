@@ -1124,6 +1124,8 @@ namespace UcbBack.Controllers
                 _context.SaveChanges();
             }
 
+            // validaciones cruzadas
+
             _context.Database.ExecuteSqlCommand("CALL \""+CustomSchema.Schema+"\".FIX_ACAD(" + process.Id + ")");
 
             _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_HASALLFILES(" + userid + "," + process.Id + ")");

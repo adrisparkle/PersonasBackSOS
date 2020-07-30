@@ -215,10 +215,12 @@ namespace UcbBack.Logic.ExcelFiles
             for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
             {
                 double nz = -1;
+                // busca en todas las celdas de la columna enviada, y revisa que ninguna sea menor o igual a 0
                 if (Double.TryParse(wb.Worksheet(sheet).Cell(i, col).Value.ToString(), out nz))
                 {
                     if (nz <= 0)
                     {
+                        // si se cumple la condicion, la pinta y marca el error de la variable comment
                         res = false;
                         paintXY(col, i, XLColor.Red, comment);
                     }

@@ -31,6 +31,15 @@ namespace UcbBack.Models
         }
         public static IQueryable<Civil> findBPInSAP(string CardCode, CustomUser user, ApplicationDbContext _context)
         {
+            string condicion = "";
+            // Si el codigo de socio comienza con P o H, entonces se busca en socios de negocio, sino es busqueda por CI
+            if (CardCode.Substring(0, 1).Equals("H") || CardCode.Substring(0, 1).Equals("P"))
+            {
+                condicion = " and ocrd.\"CardCode\"= '" + CardCode + "'";
+            }
+            else {
+                condicion = " and ocrd.\"LicTradNum\"= '" + CardCode + "'";
+            }
             var auth = new ValidateAuth();
             var query = "select 0 \"Id\",0 \"CreatedBy\",null \"Document\", ocrd.\"CardCode\" \"SAPId\", ocrd.\"CardName\" \"FullName\",ocrd.\"LicTradNum\" \"NIT\", br.\"Id\" \"BranchesId\"" +
                         " from " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".ocrd" +
@@ -41,7 +50,8 @@ namespace UcbBack.Models
                         " where ocrd.\"validFor\" = 'Y'" +
                         " and crd8.\"DisabledBP\" = 'N'" +
                         " and ocrd.\"CardType\" = 'S'" +
-                        " and ocrd.\"CardCode\"= '" + CardCode + "';";
+                        condicion;
+
             var rawresult = _context.Database.SqlQuery<Civil>(query).ToList();
 
             if (rawresult.Count() == 0)

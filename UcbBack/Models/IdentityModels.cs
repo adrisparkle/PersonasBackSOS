@@ -73,10 +73,12 @@ namespace UcbBack.Models
         public DbSet<CustomUser> CustomUsers { get; set; }
         public DbSet<SystemErrorLogs> SystemErrorLogses { get; set; }
 
+        //tutorias
+        public DbSet<AsesoriaDocente> AsesoriaDocente { get; set; }
+        public DbSet<Modalidades> Modalidades { get; set; }
+        public DbSet<TipoTarea> TipoTarea { get; set; }
 
         
-        
-
         static ApplicationDbContext()
         {
             Database.SetInitializer<ApplicationDbContext>(null);

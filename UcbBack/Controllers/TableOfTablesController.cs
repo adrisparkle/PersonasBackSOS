@@ -22,14 +22,14 @@ namespace UcbBack.Controllers
         [Route("api/TableOfTables/Linkage")]
         public IHttpActionResult GetLinkages()
         {
-            return Ok(getFromTableOfTables(TableOfTablesTypes.Linkage).Select(x=>new {x.Id, Name= x.Value}));
+            return Ok(getFromTableOfTables(TableOfTablesTypes.Linkage).Select(x => new { x.Id, Name = x.Value }));
         }
 
         [HttpGet]
         [Route("api/TableOfTables/Linkage/{id}")]
         public IHttpActionResult GetLinkage(int id)
         {
-            return Ok(getFromTableOfTables(TableOfTablesTypes.Linkage,id:id).FirstOrDefault());
+            return Ok(getFromTableOfTables(TableOfTablesTypes.Linkage, id: id).FirstOrDefault());
         }
 
         [HttpPost]
@@ -40,7 +40,7 @@ namespace UcbBack.Controllers
             {
                 return BadRequest();
             }
-            addToTableOfTables(TableOfTablesTypes.Linkage,ToT.Value);
+            addToTableOfTables(TableOfTablesTypes.Linkage, ToT.Value);
             return Ok();
         }
 
@@ -295,6 +295,25 @@ namespace UcbBack.Controllers
             return deleteInTableOfTables(id, TableOfTablesTypes.ProcessState);
         }
 
+        //-------------------------       TipoTarea       ---------------------------------
+
+        [HttpGet]
+        [Route("api/TableOfTables/TipoTarea")]
+        public IHttpActionResult TipoTarea()
+        {
+            var Tipo = _context.TableOfTableses.Where(x => x.Id >= 34 && x.Id <= 40 || x.Id >= 54 && x.Id <= 56).OrderBy(x => x.Value);
+            return Ok(Tipo);
+        }
+
+        //-------------------------       Modalidades       ---------------------------------
+        [HttpGet]
+        [Route("api/TableOfTables/Modalidades")]
+        public IHttpActionResult Modalidades()
+        {
+            var Mods = _context.TableOfTableses.Where(x => x.Id >= 44 && x.Id <= 53 || x.Id == 57).OrderBy(x => x.Value);
+            return Ok(Mods);
+        }
+
         // delete
         [NonAction]
         private IHttpActionResult deleteInTableOfTables(int id, string type)
@@ -326,7 +345,7 @@ namespace UcbBack.Controllers
 
         // insert
         [NonAction]
-        private void addToTableOfTables(string type,string value)
+        private void addToTableOfTables(string type, string value)
         {
             TableOfTables ToT = new TableOfTables();
             ToT.Id = TableOfTables.GetNextId(_context);
@@ -338,7 +357,7 @@ namespace UcbBack.Controllers
 
         // get
         [NonAction]
-        private List<TableOfTables> getFromTableOfTables(string type,int id = 0)
+        private List<TableOfTables> getFromTableOfTables(string type, int id = 0)
         {
             List<TableOfTables> res;
             if (id == 0)
