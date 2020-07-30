@@ -95,7 +95,7 @@ namespace UcbBack.Controllers
                             " on c.\"SAPId\" = ocrd.\"CardCode\"" +
                             " where ocrd.\"BranchesId\" in (" + StrIds + ")"+
                             " order by c.\"Id\";";
-                var rawresult = _context.Database.SqlQuery<Civil>(query);
+                var rawresult = _context.Database.SqlQuery<Civil>(query).Select(x => new { x.Id, x.SAPId, x.NIT,x.FullName, x.Document, x.CreatedBy, x.BranchesId, Abr=x.BranchesId!=null?_context.Branch.Where(br => br.Id == x.BranchesId).FirstOrDefault().Abr:""});
                 var res = auth.filerByRegional(rawresult.AsQueryable(), user);
                 return Ok(res);
             }

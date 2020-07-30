@@ -143,6 +143,7 @@ namespace UcbBack.Logic.ExcelFiles
                                 || wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "FC"
                                 || wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "SA"
                                 || wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "CAP"
+                                || wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "PAS"
                             )
                             &&
                             wb.Worksheet(sheet).Cell(i, index).Value.ToString() == ""
@@ -155,7 +156,6 @@ namespace UcbBack.Logic.ExcelFiles
                 else
                 {
                     //como ya sabemos que existe el proyecto, ahora preguntamos de la UO
-                    //dep es de la celda correcta
                     var row=list.FirstOrDefault(x=>x.PrjCode==strproject);
                     string UO=row.U_UORGANIZA.ToString();
                     string UOName=_context.OrganizationalUnits.FirstOrDefault(x=>x.Cod==UO).Name;
@@ -187,35 +187,31 @@ namespace UcbBack.Logic.ExcelFiles
             var connB1 = B1Connection.Instance();
             int branchId = Convert.ToInt16(segmentoOrigen);
             var branch = _context.Branch.FirstOrDefault(x => x.Id == branchId).Abr;
+            // la lista de proyectos segun la regional del proceso SAP
             var listParams = connB1.getProjects("*").Where(x => x.U_Sucursal == branch).Select(x => new { x.PrjCode, x.U_Tipo, x.U_UORGANIZA }).ToList();
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
-            var l = UsedRange.LastRow().RowNumber();
-
 
             for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
             {
                 //Si el proyecto existe en SAP ahí validamos los tipos de proyecto y cuentas asignadas
-                
-                if (listParams.Exists(x => string.Equals(x.PrjCode.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
+                var strproject = index != -1 ? wb.Worksheet(sheet).Cell(i, index).Value.ToString() : null;
+                if (listParams.Exists(x => string.Equals(x.PrjCode.ToString(), strproject, StringComparison.OrdinalIgnoreCase)))
                 {
-                    var strproject = index != -1 ? wb.Worksheet(sheet).Cell(i, index).Value.ToString() : null;
-                    var row = listParams.FirstOrDefault(x => x.PrjCode == strproject);
-                    string UO = row.U_UORGANIZA.ToString();
-                    var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
-                    var dep = _context.Dependencies.Where(x => x.BranchesId == branchId).Include(x => x.OrganizationalUnit).FirstOrDefault(x => x.Cod == strdependency);
-                    //Validamos aunque la UO no iguale, esto con el objetivo de que marque los errores
-                    //CAP se deja pasar
-                    if (wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() != "CAP" && row.U_UORGANIZA!=dep.OrganizationalUnit.Cod)
+                    //CAP se deja pasar, no validamos ese tipo de proyecto
+                    if (wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() != "CAP")
                     {
                         //-----------------------------Validacion del tipo--------------------------------
-                        var projectAccount = wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString();
                         var projectType = listParams.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().U_Tipo.ToString();
-                        string tipo = projectType;//variable auxiliar, no puede usarse la de arriba en EF por ser dinámica
-                        var typeExists = _context.TableOfTableses.ToList().Exists(x => string.Equals(x.Type, tipo, StringComparison.OrdinalIgnoreCase));
+                        //tipo de proyecto de la celda excel
+                        string tipo = projectType;
+                        // lista de tipos de proyectos que son validos
+                        var tiposBD = _context.TableOfTableses.Where(x => x.Type.Equals("TIPOS_P&C_SALOMON")).Select(x => x.Value).ToList();
+                        var typeExists = tiposBD.Exists(x => string.Equals(x.Split(':')[0], tipo, StringComparison.OrdinalIgnoreCase));
                         if (!typeExists)
                         {
-                            //si el proyecto tiene un U_Tipo en SAP y no lo tenemos en personas, entonces no es válido. Pasa para los proyectos con U_Tipo 'I', ESOS NUNCA ENTRAN EN PLANILLAS, este If es una formalidad
-                            commnet = "El tipo de proyecto no es válido";
+                            //si el proyecto tiene un U_Tipo en SAP y no lo tenemos en personas, entonces no es válido. 
+                            //Pasa para los proyectos con U_Tipo 'I', ESOS NUNCA ENTRAN EN PLANILLAS, este If es una formalidad
+                            commnet = "El tipo de proyecto: " + tipo + " no es válido.";
                             paintXY(index, i, XLColor.Red, commnet);
                             badType++;
                             res = false;
@@ -223,8 +219,10 @@ namespace UcbBack.Logic.ExcelFiles
                         else
                         {
                             //-----------------------------Validacion de la cuenta asignada--------------------------------
-                            var assignedAccount = _context.TableOfTableses.Where(x => x.Type == tipo).Where(x => x.Id >= 29 && x.Id <= 33).FirstOrDefault().Value.ToString();//la cuenta asignada a ese tipo de proyecto
-                            //si el tipo existe en nuestra BD entonces verificar que la cuenta corresponda a ese tipo
+                            // el tipo de proyecto en SAP
+                            var projectAccount = wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString();
+                            //la cuenta asignada a ese tipo de proyecto segun el tipo de proyecto
+                            var assignedAccount = tiposBD.Where(x => x.Split(':')[0].Equals(tipo)).FirstOrDefault().ToString().Split(':')[1];
                             if (projectAccount != assignedAccount)
                             {
                                 commnet = "La cuenta asignada es incorrecta, debería ser: " + assignedAccount;
@@ -247,20 +245,23 @@ namespace UcbBack.Logic.ExcelFiles
         private bool verifyDates(int dependency, int sheet = 1)
         {
             string commnet;//especifica el error
+            // se inicializa la instancia del SDK para obtener la lista de proyectos
             var connB1 = B1Connection.Instance();
+            // filtrado de proyectos por regional del proceso SALOMON
             int branchId = Convert.ToInt16(segmentoOrigen);
             var branch = _context.Branch.FirstOrDefault(x => x.Id == branchId).Abr;
+            // proyectos para la regional del proceso
             var list = connB1.getProjects("*").Where(x => x.U_Sucursal == branch).Select(x => new { x.PrjCode, x.U_Tipo, x.ValidFrom, x.ValidTo, x.U_UORGANIZA }).ToList();
             int index = 15;
             bool res = true;
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
             var l = UsedRange.LastRow().RowNumber();
 
-
+            //recorriendo el excel desde la fil
             for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
             {
                
-                //Si el proyecto existe en SAP ahí validamos fechas
+                //Si el proyecto de la celda en la lista de proyectos filtrados en SAP ahí validamos fechas
                 if (list.Exists(x => string.Equals(x.PrjCode.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
                 {
                     var strproject = index != -1 ? wb.Worksheet(sheet).Cell(i, index).Value.ToString() : null;

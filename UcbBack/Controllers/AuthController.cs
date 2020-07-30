@@ -10,6 +10,7 @@ using UcbBack.Logic;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
 using System.Data.Entity;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
 namespace UcbBack.Controllers
 {
@@ -214,6 +215,14 @@ namespace UcbBack.Controllers
             _context.SaveChanges();
 
             return Ok();
+        }
+
+        [HttpGet]
+        [Route("api/auth/UserData")]
+        public IHttpActionResult UserData() {
+            var user = validateauth.getUser(Request).People.CUNI;
+            string name = _context.Database.SqlQuery<string>("select \"FullName\" from " + CustomSchema.Schema + ".\"FullName\" where \"CUNI\" = '" + user + "'").FirstOrDefault();
+            return Ok(name);
         }
     }
 }

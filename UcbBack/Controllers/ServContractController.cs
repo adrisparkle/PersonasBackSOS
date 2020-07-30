@@ -25,6 +25,7 @@ using System.Data.Entity;
 using System.Data.Entity.Migrations;
 using UcbBack.Logic.B1;
 using UcbBack.Models.Auth;
+using System.Globalization;
 
 namespace UcbBack.Controllers
 {
@@ -672,7 +673,19 @@ namespace UcbBack.Controllers
             }
 
             DateTime date = DateTime.Parse(webdata["date"].ToString());
-            process.InSAPAt = date;
+
+            /*string fecha = date.ToString("MM/dd/yyyy");
+
+            string format = "d";
+
+            var date2 = DateTime.ParseExact(
+            fecha,
+            format,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);*/
+
+           
+            process.InSAPAt = null;
 
             var data = process.getVoucherData(_context);
             var memos = data.Select(x => x.Memo).Distinct().ToList();

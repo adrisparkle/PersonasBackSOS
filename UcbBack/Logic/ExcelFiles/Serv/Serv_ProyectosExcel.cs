@@ -211,29 +211,26 @@ namespace UcbBack.Logic.ExcelFiles.Serv
            {
                if (list.Exists(x => string.Equals(x.PrjCode.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
                {
-                   var strproject = index != -1 ? wb.Worksheet(sheet).Cell(i, index).Value.ToString() : null;
-                   var row = list.FirstOrDefault(x => x.PrjCode == strproject);
-                   string UO = row.U_UORGANIZA.ToString();
-                   var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
-                   var dep = _context.Dependencies.Where(x => x.BranchesId == br.Id).Include(x => x.OrganizationalUnit).FirstOrDefault(x => x.Cod == strdependency);
-                   //Si la UO hace match también
-                   if(row.U_UORGANIZA==dep.OrganizationalUnit.Cod){
-                    //-----------------------------Validaciones de la cuenta--------------------------------
-                   var projectAccount = wb.Worksheet(sheet).Cell(i, tipoProyecto).Value.ToString();
-                   var projectType = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().U_Tipo.ToString();//tipo de proyecto del proyecto en la celda
-                   string tipo = projectType;//variable auxiliar, no puede usarse la de arriba en EF por ser dinámica
-                   var typeExists = _context.TableOfTableses.ToList().Exists(x => string.Equals(x.Type, tipo, StringComparison.OrdinalIgnoreCase));
+
+                   if (wb.Worksheet(sheet).Cell(i, tipoProyecto).Value.ToString() != "CAP")
+                   {
+                        //-----------------------------Validaciones de la cuenta--------------------------------
+                       var tiposBD = _context.TableOfTableses.Where(x => x.Type.Equals("TIPOS_P&C_SARAI")).Select(x => x.Value).ToList();
+                       var projectType = list.Where(x => x.PrjCode == wb.Worksheet(sheet).Cell(i, index).Value.ToString()).FirstOrDefault().U_Tipo.ToString();//tipo de proyecto del proyecto en la celda
+                       string tipo = projectType;//variable auxiliar, no puede usarse la de arriba en EF por ser dinámica
+                       var typeExists = tiposBD.Exists(x => string.Equals(x.Split(':')[0], tipo, StringComparison.OrdinalIgnoreCase));
                        //el tipo de proyecto existe en nuestra tabla de tablas?
                        if (!typeExists)
                        {
-                           commnet = "El tipo de proyecto no es válido";
+                           commnet = "El tipo de proyecto: " + tipo + " no es válido.";
                            paintXY(index, i, XLColor.Red, commnet);
                            res = false;
                            badType++;
                        }
                        else
                        {
-                           var assignedAccount = _context.TableOfTableses.Where(x => x.Type == tipo).Where(x => x.Id >= 24 && x.Id<29).FirstOrDefault().Value.ToString();//la cuenta asignada a ese tipo de proyecto
+                           var projectAccount = wb.Worksheet(sheet).Cell(i, tipoProyecto).Value.ToString();
+                           var assignedAccount = tiposBD.Where(x => x.Split(':')[0].Equals(tipo)).FirstOrDefault().ToString().Split(':')[1];
                            if (projectAccount != assignedAccount)
                            {
                                commnet = "La cuenta asignada es incorrecta, debería ser: " + assignedAccount;
