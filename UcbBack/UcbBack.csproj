@@ -224,6 +224,7 @@
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Controllers\AccessController.cs" />
     <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\AsesoriaDocenteController.cs" />
     <Compile Include="Controllers\AltasContratosController.cs" />
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\B1Controller.cs" />
@@ -239,6 +240,7 @@
     <Compile Include="Controllers\GestionController.cs" />
     <Compile Include="Controllers\GrupoContableController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\ModalidadesController.cs" />
     <Compile Include="Controllers\LevelController.cs" />
     <Compile Include="Controllers\ModuleController.cs" />
     <Compile Include="Controllers\NombramientoController.cs" />
@@ -251,6 +253,7 @@
     <Compile Include="Controllers\RolController.cs" />
     <Compile Include="Controllers\ServContractController.cs" />
     <Compile Include="Controllers\TableOfTablesController.cs" />
+    <Compile Include="Controllers\TipoTareaController.cs" />
     <Compile Include="Controllers\TipoEmpleadoDistController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -282,6 +285,7 @@
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
+    <Compile Include="Models\AsesoriaDocente.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\Auth\Access.cs" />
     <Compile Include="Models\Auth\AccessLogs.cs" />
@@ -295,11 +299,18 @@
     <Compile Include="Models\CauseOfMovement.cs" />
     <Compile Include="Models\ChangesLogs.cs" />
     <Compile Include="Models\Civil.cs" />
+    <Compile Include="Models\Modalidades.cs" />
     <Compile Include="Models\Not Mapped\Chart.cs" />
     <Compile Include="Models\Not Mapped\BusquedaIndividual.cs" />
+    <Compile Include="Models\Not Mapped\CostCenterCarrera.cs" />
+    <Compile Include="Models\Not Mapped\PositionPerSubject.cs" />
     <Compile Include="Models\Not Mapped\PeopleData.cs" />
     <Compile Include="Models\Not Mapped\ContractData.cs" />
     <Compile Include="Models\Not Mapped\FiltroBG.cs" />
+    <Compile Include="Models\Not Mapped\ViewMoldes\AsesoriaDocenteViewModel.cs" />
+    <Compile Include="Models\Not Mapped\ViewMoldes\AsesoriaTeachers.cs" />
+    <Compile Include="Models\Not Mapped\ViewMoldes\AsesoríaExcel.cs" />
+    <Compile Include="Models\Not Mapped\ViewMoldes\DistPregradoViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_PregradoViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_ProyectosViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_ReemplazoViewModel.cs" />
@@ -344,6 +355,7 @@
     <Compile Include="Models\B1SDKLog.cs" />
     <Compile Include="Models\Dist\TipoEmpleadoDist.cs" />
     <Compile Include="Models\TableOfTables.cs" />
+    <Compile Include="Models\TipoTarea.cs" />
     <Compile Include="Models\TempAlta.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\ContractDetailViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\UserViewModel.cs" />

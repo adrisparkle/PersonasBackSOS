@@ -7,6 +7,7 @@ using Microsoft.AspNet.Identity.Owin;
 using UcbBack.Models.Auth;
 using UcbBack.Models.Dist;
 using UcbBack.Models.Serv;
+using UcbBack.Models;
 
 namespace UcbBack.Models
 {

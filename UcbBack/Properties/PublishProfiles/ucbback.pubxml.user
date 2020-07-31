@@ -712,10 +712,10 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>01/01/0001 00:00:00</publishTime>
     </File>
     <File Include="Views/Home/Index.cshtml">
-      <publishTime>01/08/2018 16:56:40</publishTime>
+      <publishTime>08/01/2018 16:56:40</publishTime>
     </File>
     <File Include="Views/Home/index.html">
-      <publishTime>07/31/2018 11:50:23</publishTime>
+      <publishTime>01/01/0001 00:00:00</publishTime>
     </File>
     <File Include="Views/Home/Index_admin.cshtml">
       <publishTime>01/01/0001 00:00:00</publishTime>

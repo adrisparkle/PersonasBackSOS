@@ -80,7 +80,7 @@ namespace UcbBack.Controllers
                 return Ok(uniqueRecord);
             }
         }
-        
+
         //obtener registros de tutorias segun su estado
         [HttpGet]
         [Route("api/AsesoriaDocente")]
@@ -103,32 +103,39 @@ namespace UcbBack.Controllers
             var rawresult = new List<AsesoriaDocenteViewModel>();
             var user = auth.getUser(Request);
 
-            if (by.Equals("APROBADO")) {
+            if (by.Equals("APROBADO"))
+            {
                 string customQuery = query + "where a.\"Estado\"='APROBADO' " + orderBy;
                 //Mes a literal
                 rawresult = mesLiteral(customQuery);
                 var filteredList = auth.filerByRegional(rawresult.AsQueryable(), user).ToList()
-                    .Select(x => new { x.Id, x.Acta, x.Carrera, Profesor = x.TeacherFullName, Estudiante=x.StudentFullName, Tarea=x.TipoTarea, x.MesLiteral, x.Origen, x.Gestion });
+                    .Select(x => new { x.Id, x.Acta, x.Carrera, Profesor = x.TeacherFullName, Estudiante = x.StudentFullName, Tarea = x.TipoTarea, x.MesLiteral, x.Origen, x.Gestion });
                 return Ok(filteredList);
 
-            } else if (by.Equals("PRE-APROBADO")){
+            }
+            else if (by.Equals("PRE-APROBADO"))
+            {
                 string customQuery = query + "where a.\"Estado\"='PRE-APROBADO' " + orderBy;
                 rawresult = _context.Database.SqlQuery<AsesoriaDocenteViewModel>(customQuery).ToList();
                 var filteredList = auth.filerByRegional(rawresult.AsQueryable(), user).ToList()
-                    .Select(x => new {x.Id, x.TeacherFullName, x.Acta, x.Carrera, x.StudentFullName, x.TipoTarea, x.Modalidad, x.TotalNeto, x.TotalBruto });;
+                    .Select(x => new { x.Id, x.TeacherFullName, x.Acta, x.Carrera, x.StudentFullName, x.TipoTarea, x.Modalidad, x.TotalNeto, x.TotalBruto }); ;
                 return Ok(filteredList);
 
-            } else if (by.Equals("REGISTRADO-DEP")){
+            }
+            else if (by.Equals("REGISTRADO-DEP"))
+            {
                 //para la pantalla de aprobación nos interesan los registrados nada más
-                string customQuery = query + "where a.\"Estado\"='REGISTRADO' " + "and a.\"Origen\"='DEPEN' " +orderBy;
+                string customQuery = query + "where a.\"Estado\"='REGISTRADO' " + "and a.\"Origen\"='DEPEN' " + orderBy;
                 rawresult = _context.Database.SqlQuery<AsesoriaDocenteViewModel>(customQuery).ToList();
                 var filteredList = auth.filerByRegional(rawresult.AsQueryable(), user).ToList()
                     .Select(x => new { x.Id, x.TeacherFullName, x.Acta, x.Carrera, x.StudentFullName, x.TipoTarea, x.Modalidad, x.TotalNeto, x.TotalBruto }); ; ;
                 return Ok(filteredList);
 
-            } else if (by.Equals("REGISTRADO-INDEP")) {
-            //para la pantalla de aprobación nos interesan los registrados nada más
-                string customQuery = query + "where a.\"Estado\"='REGISTRADO' " +"and a.\"Origen\"='INDEP' " +orderBy;
+            }
+            else if (by.Equals("REGISTRADO-INDEP"))
+            {
+                //para la pantalla de aprobación nos interesan los registrados nada más
+                string customQuery = query + "where a.\"Estado\"='REGISTRADO' " + "and a.\"Origen\"='INDEP' " + orderBy;
                 rawresult = _context.Database.SqlQuery<AsesoriaDocenteViewModel>(customQuery).ToList();
                 var filteredList = auth.filerByRegional(rawresult.AsQueryable(), user).ToList()
                     .Select(x => new { x.Id, x.TeacherFullName, x.Acta, x.Carrera, x.StudentFullName, x.TipoTarea, x.Modalidad, x.TotalNeto, x.TotalBruto }); ; ;
@@ -143,8 +150,9 @@ namespace UcbBack.Controllers
                     .Select(x => new { x.Id, x.TeacherFullName, x.Acta, x.Carrera, x.StudentFullName, x.TipoTarea, x.Modalidad, x.TotalNeto, x.TotalBruto });
                 return Ok(filteredList);
             }
-            else {
-                return BadRequest();            
+            else
+            {
+                return BadRequest();
             }
 
         }
@@ -165,7 +173,7 @@ namespace UcbBack.Controllers
                         "  \"TeacherFullName\"= '" + record + "' " +
                         "   and \"Estado\"='APROBADO' " +
                         "order by a.\"Gestion\" desc, a.\"Mes\" desc, a.\"Carrera\" asc, a.\"TeacherCUNI\" asc ";
-            var allTeachingRecords = mesLiteral(query).Select(x => new { x.Id, x.Modalidad, x.TipoTarea, x.Carrera, x.Horas, x.MontoHora, x.TotalBruto, x.Deduccion, x.TotalNeto, Estudiante=x.StudentFullName, x.MesLiteral, x.Gestion});
+            var allTeachingRecords = mesLiteral(query).Select(x => new { x.Id, x.Modalidad, x.TipoTarea, x.Carrera, x.Horas, x.MontoHora, x.TotalBruto, x.Deduccion, x.TotalNeto, Estudiante = x.StudentFullName, x.MesLiteral, x.Gestion });
 
             return Ok(allTeachingRecords);
         }
@@ -224,7 +232,7 @@ namespace UcbBack.Controllers
                             "\"TeacherFullName\", \"Categoría\", " +
                             "m.\"Abr\" as \"Modalidad\", " +
                             "t.\"Abr\" as \"TipoTarea\", " +
-                            "a.\"Carrera\" ||"+ " ' ' " +"|| op.\"PrcName\" as \"Carrera\" " + ", \"StudentFullName\" , " +
+                            "a.\"Carrera\" ||" + " ' ' " + "|| op.\"PrcName\" as \"Carrera\" " + ", \"StudentFullName\" , " +
                             "\"Acta\", \"ActaFecha\" , " +
                             "\"Horas\", \"MontoHora\", " +
                             "\"TotalBruto\" , " +
@@ -240,11 +248,11 @@ namespace UcbBack.Controllers
                             "on a.\"ModalidadId\"=m.\"Id\" " +
                         "inner join " +
                             ConfigurationManager.AppSettings["B1CompanyDB"] + ".\"OPRC\" op " +
-                            "on a.\"Carrera\"= op.\"PrcCode\" "+
+                            "on a.\"Carrera\"= op.\"PrcCode\" " +
                         "where " +
-                            "a.\"Estado\"='" + state + "' "+
-                            "and a.\"Origen\" like '%"+ origin + "%'" +
-                            "and op.\"DimCode\" = 3 "+
+                            "a.\"Estado\"='" + state + "' " +
+                            "and a.\"Origen\" like '%" + origin + "%'" +
+                            "and op.\"DimCode\" = 3 " +
                         "order by \"Carrera\", \"TeacherFullName\" ";
                     report = _context.Database.SqlQuery<AsesoriaDocenteViewModel>(query).ToList();
                     break;
@@ -252,7 +260,7 @@ namespace UcbBack.Controllers
                 case "Results":
                     //obtiene los resultados al pie de cada tabla, por carrera
                     query = "select " +
-                            "(a.\"Carrera\" ||"+ " ' ' " +"|| op.\"PrcName\") as \"Carrera\", "+
+                            "(a.\"Carrera\" ||" + " ' ' " + "|| op.\"PrcName\") as \"Carrera\", " +
                             "sum(\"TotalBruto\") as \"TotalBruto\", " +
                             "sum(\"TotalNeto\") as \"TotalNeto\", \"BranchesId\" " +
                         "from " +
@@ -261,7 +269,7 @@ namespace UcbBack.Controllers
                             ConfigurationManager.AppSettings["B1CompanyDB"] + ".\"OPRC\" op " +
                             "on a.\"Carrera\"= op.\"PrcCode\" " +
                         "where " +
-                            "\"Estado\"='"+ state + "' " +
+                            "\"Estado\"='" + state + "' " +
                             "and a.\"Origen\" like '%" + origin + "%'" +
                         "group by \"Carrera\", \"PrcName\", \"BranchesId\" " +
                         "order by \"Carrera\" ";
@@ -298,7 +306,7 @@ namespace UcbBack.Controllers
                     Tarea = x.TipoTarea,
                     Alumno = x.StudentFullName,
                     Acta = x.Acta,
-                    Fecha = x.ActaFecha != null? x.ActaFecha.ToString("dd-MM-yyyy"): null,
+                    Fecha = x.ActaFecha != null ? x.ActaFecha.ToString("dd-MM-yyyy") : null,
                     Horas = x.Horas,
                     Costo_Hora = x.MontoHora,
                     Total_Bruto = x.TotalBruto,
@@ -336,21 +344,22 @@ namespace UcbBack.Controllers
         {
             string[] info = data.Split(';');
             int segmentoId = Convert.ToInt16(info[0]);
-            string segmento = _context.Branch.FirstOrDefault(x=>x.Id == segmentoId).Abr;
+            string segmento = _context.Branch.FirstOrDefault(x => x.Id == segmentoId).Abr;
             string mes = (info[1]);
             string gestion = info[2];
 
             var process = _context.DistProcesses.FirstOrDefault(x => x.mes.Equals(mes) && x.gestion.Equals(gestion) && x.Branches.Abr.Equals(segmento) && x.State.Equals("INSAP"));
             //validar que ese proceso en SALOMON sea válido para la generación de datos
-            if (process!=null)
+            if (process != null)
             {
                 HttpResponseMessage response =
                             new HttpResponseMessage(HttpStatusCode.InternalServerError);
-                            response.Content = new StringContent("El periodo seleccionado no es válido para la generación del archivo PREGRADO en la regional "+ segmento);
-                            response.RequestMessage = Request;
-                            return response;
+                response.Content = new StringContent("El periodo seleccionado no es válido para la generación del archivo PREGRADO en la regional " + segmento);
+                response.RequestMessage = Request;
+                return response;
             }
-            else {
+            else
+            {
                 var user = auth.getUser(Request);
                 //El query genera el archivo PREGRADO de SALOMON en base a los datos de las tutorías PRE-APROBADAS
                 string query = "select  " +
@@ -371,12 +380,12 @@ namespace UcbBack.Controllers
                                         "on a.\"BranchesId\"=br.\"Id\" " +
                                     "where " +
                                         "a.\"Estado\"='PRE-APROBADO' " +
-                                        "and br.\"Abr\" ='" + segmento + "' "+
+                                        "and br.\"Abr\" ='" + segmento + "' " +
                                         "and a.\"Origen\"='DEPEN' " +
                                     "order by a.\"Id\" desc) " +
                                  "group by \"Document\" ,\"FirstSurName\", \"SecondSurName\",  \"Names\", \"MariedSurName\", \"Carrera\" , \"CUNI\", \"Dependency\", \"BranchesId\" " +
                                  "order by \"Carrera\" asc, \"FirstSurName\" ";
-                
+
                 var excelContent = _context.Database.SqlQuery<DistPregradoViewModel>(query).ToList();
 
                 var filteredWithoutCol = excelContent.Select(x => new { x.Document, x.FirstSurName, x.SecondSurName, x.Names, x.MariedSurName, x.TotalNeto, x.Carrera, x.CUNI, x.Dependency }).ToList();
@@ -477,9 +486,9 @@ namespace UcbBack.Controllers
             string mes = (info[1]);
             string gestion = info[2];
             //El query genera el archivo PREGRADO de SALOMON en base a los datos de las tutorías PRE-APROBADAS
-            string query =      
+            string query =
                 "select " +
-                    "a.\"TeacherBP\" as \"Codigo_Socio\", a.\"TeacherFullName\" as \"Nombre_Socio\", "+
+                    "a.\"TeacherBP\" as \"Codigo_Socio\", a.\"TeacherFullName\" as \"Nombre_Socio\", " +
                     "a.\"DependencyCod\" as \"Cod_Dependencia\", 'PO' as \"PEI_PO\", " +
                     "t.\"Tarea\" as \"Nombre_del_Servicio\", a.\"Carrera\" as \"Codigo_Carrera\" ,a.\"Acta\" as \"DocumentNumber\", " +
                     "a.\"StudentFullName\" as \"Postulante\", t.\"Type\" as \"Tipo_Tarea_Asignada\", 'CC_TEMPORAL' as \"Cuenta_Asignada\", " +
@@ -516,7 +525,7 @@ namespace UcbBack.Controllers
             var rngTable = ws.Range(1, 1, 2, header.Length);
 
             //Bordes para las columnas
-            var columns = ws.Range(2, 1, excelContent.Count +1, header.Length);
+            var columns = ws.Range(2, 1, excelContent.Count + 1, header.Length);
             columns.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
             columns.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
 
@@ -547,7 +556,7 @@ namespace UcbBack.Controllers
             response.StatusCode = HttpStatusCode.OK;
             response.Content = new StreamContent(ms);
             response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-            response.Content.Headers.ContentDisposition.FileName = segmento+"-CC_CARRERA.xlsx";
+            response.Content.Headers.ContentDisposition.FileName = segmento + "-CC_CARRERA.xlsx";
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.Content.Headers.ContentLength = ms.Length;
             //La posicion para el comienzo del stream
@@ -555,7 +564,7 @@ namespace UcbBack.Controllers
 
             //-----------------------------------------------------Cambios en PRE-APROBADOS INDEP ---------------------------------------------------------------------
             //Actualizar con la fecha a los registros pre-aprobados
-            var branchesId = _context.Branch.FirstOrDefault(x=>x.Abr ==segmento);
+            var branchesId = _context.Branch.FirstOrDefault(x => x.Abr == segmento);
             var docentesPorAprobar = _context.AsesoriaDocente.Where(x => x.Origen.Equals("INDEP") && x.Estado.Equals("PRE-APROBADO") && x.BranchesId == segmentoId).ToList();
             //Se sobrescriben los registros con la fecha actual y el nuevo estado
             foreach (var docente in docentesPorAprobar)
@@ -725,7 +734,8 @@ namespace UcbBack.Controllers
                         {
                             thisAsesoria.Estado = "APROBADO";
                         }
-                        else {
+                        else
+                        {
                             thisAsesoria.Estado = "PRE-APROBADO";
                         }
                         _context.SaveChanges();

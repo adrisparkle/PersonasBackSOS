@@ -17,7 +17,8 @@ namespace UcbBack.Controllers
             _context = new ApplicationDbContext();
         }
 
-        public IHttpActionResult Get() {
+        public IHttpActionResult Get()
+        {
             var modalidades = _context.Modalidades.ToList();
             return Ok(modalidades);
         }
