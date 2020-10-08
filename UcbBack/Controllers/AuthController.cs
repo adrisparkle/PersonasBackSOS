@@ -106,7 +106,7 @@ namespace UcbBack.Controllers
         // POST: /api/auth/gettoken/
         [HttpPost]
         [Route("api/auth/GetToken")]
-        public IHttpActionResult GetToken([FromBody]JObject credentials)
+        public IHttpActionResult GetToken([FromBody]JObject credentials) 
         {
             if (credentials["username"] == null || credentials["password"] == null)
                 return BadRequest();

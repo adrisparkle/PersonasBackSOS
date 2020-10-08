@@ -21,6 +21,7 @@ using UcbBack.Logic.ExcelFiles;
 using UcbBack.Models.Dist;
 using System.Diagnostics;
 using UcbBack.Logic.ExcelFiles.Serv;
+using System.Globalization;
 
 namespace UcbBack.Controllers
 {
@@ -86,6 +87,12 @@ namespace UcbBack.Controllers
         [Route("api/AsesoriaDocente")]
         public IHttpActionResult getAsesoria([FromUri] string by)
         {
+            //region
+            //CultureInfo cultura = new CultureInfo("is-IS");
+            //Remplazá "es-AR" por tu país.
+            //decimal d = Convert.ToDecimal("TextBox1.Text", cultura);
+            //Caso decimal
+            //double a = Convert.ToDouble("TextBox1.Text", cultura);
             //datos para la tabla histórica
             string query = "select a.\"Id\",a.\"TeacherFullName\", a.\"TeacherCUNI\", a.\"TeacherBP\", a.\"Categoría\", " +
                                 "case when (a.\"Acta\") is null or (a.\"Acta\")='' then 'S/N' when (a.\"Acta\") is not null then a.\"Acta\" end as \"Acta\", a.\"ActaFecha\", a.\"BranchesId\", br.\"Abr\" as \"Regional\", a.\"Carrera\", a.\"DependencyCod\", a.\"Horas\", " +
@@ -99,7 +106,6 @@ namespace UcbBack.Controllers
                                 "inner join " + CustomSchema.Schema + ".\"Branches\" br " +
                                 "on a.\"BranchesId\"=br.\"Id\" ";
             string orderBy = "order by a.\"Gestion\" desc, a.\"Mes\" desc, a.\"Carrera\" asc, a.\"TeacherCUNI\" asc ";
-
             var rawresult = new List<AsesoriaDocenteViewModel>();
             var user = auth.getUser(Request);
 
@@ -118,7 +124,18 @@ namespace UcbBack.Controllers
                 string customQuery = query + "where a.\"Estado\"='PRE-APROBADO' " + orderBy;
                 rawresult = _context.Database.SqlQuery<AsesoriaDocenteViewModel>(customQuery).ToList();
                 var filteredList = auth.filerByRegional(rawresult.AsQueryable(), user).ToList()
-                    .Select(x => new { x.Id, x.TeacherFullName, x.Acta, x.Carrera, x.StudentFullName, x.TipoTarea, x.Modalidad, x.TotalNeto, x.TotalBruto }); ;
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.TeacherFullName,
+                        x.Acta,
+                        x.Carrera,
+                        x.StudentFullName,
+                        x.TipoTarea,
+                        x.Modalidad,
+                        TotalNeto = string.Format("{0,00}", x.TotalNeto),
+                        TotalBruto = string.Format("{0,00}", x.TotalBruto)
+                    }); ;
                 return Ok(filteredList);
 
             }
@@ -128,7 +145,18 @@ namespace UcbBack.Controllers
                 string customQuery = query + "where a.\"Estado\"='REGISTRADO' " + "and a.\"Origen\"='DEPEN' " + orderBy;
                 rawresult = _context.Database.SqlQuery<AsesoriaDocenteViewModel>(customQuery).ToList();
                 var filteredList = auth.filerByRegional(rawresult.AsQueryable(), user).ToList()
-                    .Select(x => new { x.Id, x.TeacherFullName, x.Acta, x.Carrera, x.StudentFullName, x.TipoTarea, x.Modalidad, x.TotalNeto, x.TotalBruto }); ; ;
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.TeacherFullName,
+                        x.Acta,
+                        x.Carrera,
+                        x.StudentFullName,
+                        x.TipoTarea,
+                        x.Modalidad,
+                        TotalNeto = string.Format("{0,00}", x.TotalNeto),
+                        TotalBruto = string.Format("{0,00}", x.TotalBruto)
+                    }); ; ;
                 return Ok(filteredList);
 
             }
@@ -138,7 +166,18 @@ namespace UcbBack.Controllers
                 string customQuery = query + "where a.\"Estado\"='REGISTRADO' " + "and a.\"Origen\"='INDEP' " + orderBy;
                 rawresult = _context.Database.SqlQuery<AsesoriaDocenteViewModel>(customQuery).ToList();
                 var filteredList = auth.filerByRegional(rawresult.AsQueryable(), user).ToList()
-                    .Select(x => new { x.Id, x.TeacherFullName, x.Acta, x.Carrera, x.StudentFullName, x.TipoTarea, x.Modalidad, x.TotalNeto, x.TotalBruto }); ; ;
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.TeacherFullName,
+                        x.Acta,
+                        x.Carrera,
+                        x.StudentFullName,
+                        x.TipoTarea,
+                        x.Modalidad,
+                        TotalNeto = string.Format("{0,00}", x.TotalNeto),
+                        TotalBruto = string.Format("{0,00}", x.TotalBruto)
+                    }); ; ;
                 return Ok(filteredList);
             }
             else if (by.Equals("REGISTRADO-OR"))
@@ -147,7 +186,18 @@ namespace UcbBack.Controllers
                 string customQuery = query + "where a.\"Estado\"='REGISTRADO' " + "and a.\"Origen\"='OR' " + orderBy;
                 rawresult = _context.Database.SqlQuery<AsesoriaDocenteViewModel>(customQuery).ToList();
                 var filteredList = auth.filerByRegional(rawresult.AsQueryable(), user).ToList()
-                    .Select(x => new { x.Id, x.TeacherFullName, x.Acta, x.Carrera, x.StudentFullName, x.TipoTarea, x.Modalidad, x.TotalNeto, x.TotalBruto });
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.TeacherFullName,
+                        x.Acta,
+                        x.Carrera,
+                        x.StudentFullName,
+                        x.TipoTarea,
+                        x.Modalidad,
+                        TotalNeto = string.Format("{0,00}", x.TotalNeto),
+                        TotalBruto = string.Format("{0,00}", x.TotalBruto)
+                    });
                 return Ok(filteredList);
             }
             else
@@ -392,16 +442,19 @@ namespace UcbBack.Controllers
 
                 //--------------------------------------------------------Generación del excel------------------------------------------------------------------------
                 //Para las columnas del excel
-                string[] header = new string[]{"Carnet Identidad", "Primer Apellido", "Segundo Apellido", 
-                                            "Nombres", "Apellido Casada", "Total Neto Ganado", "Código de Carrera", "CUNI", 
+                string[] header = new string[]{"Carnet Identidad", "Primer Apellido", "Segundo Apellido",
+                                            "Nombres", "Apellido Casada", "Total Neto Ganado", "Código de Carrera", "CUNI",
                                             "Identificador de dependencia"};
                 var workbook = new XLWorkbook();
-
+               
                 //Se agrega la hoja de excel
                 var ws = workbook.Worksheets.Add("PREGRADO");
-
+                /*var range = workbook.Worksheets.Range("A1:B2");
+                range.Value = "Merged A1:B2";
+                range.Merge();
+                range.Style.Alignment.Vertical = AlignmentVerticalValues.Top;*/
                 // Título
-                ws.Cell("A1").Value = "PREGRADO";
+                ws.Cell("A1;I2").Value = "PREGRADO";
 
                 //Formato Cabecera
                 ws.Cell(1, 1).Style.Font.Bold = true;
@@ -451,7 +504,7 @@ namespace UcbBack.Controllers
                 response.StatusCode = HttpStatusCode.OK;
                 response.Content = new StreamContent(ms);
                 response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-                response.Content.Headers.ContentDisposition.FileName = segmento + mes + gestion + "PREG.xlsx";
+                response.Content.Headers.ContentDisposition.FileName = segmento + gestion + mes + "PREG.xlsx";
                 response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
                 response.Content.Headers.ContentLength = ms.Length;
                 //La posicion para el comienzo del stream
@@ -511,9 +564,9 @@ namespace UcbBack.Controllers
             var excelContent = _context.Database.SqlQuery<Serv_PregradoViewModel>(query).ToList();
 
             //Para las columnas del excel
-            string[] header = new string[]{"Codigo_Socio", "Nombre_Socio", "Cod", 
-                                            "PEI_PO", "Nombre_del_Servicio", "Codigo_Carrera", "Documento_Base", "Postulante", 
-                                            "Tipo_Tarea_Asignada", "Cuenta_Asignada", 
+            string[] header = new string[]{"Codigo_Socio", "Nombre_Socio", "Cod",
+                                            "PEI_PO", "Nombre_del_Servicio", "Codigo_Carrera", "Documento_Base", "Postulante",
+                                            "Tipo_Tarea_Asignada", "Cuenta_Asignada",
                                             "Monto_Contrato","Monto_IUE","Monto_IT","Monto_a_Pagar", "Observaciones"};
             var workbook = new XLWorkbook();
 
@@ -650,13 +703,14 @@ namespace UcbBack.Controllers
                                             "and op.\"PrcCode\" ='" + asesoria.Carrera + "' " +
                                             "and de.\"BranchesId\"=" + asesoria.BranchesId).FirstOrDefault().ToString();
                 asesoria.DependencyCod = dep;
+                asesoria.StudentFullName = asesoria.StudentFullName.ToUpper();
                 //agregar el nuevo registro en el contexto
                 _context.AsesoriaDocente.Add(asesoria);
                 _context.SaveChanges();
                 return Ok("Información registrada");
             }
         }
-
+        //modificacion de la tutoria
         [HttpPut]
         [Route("api/AsesoriaDocente/{id}")]
         public IHttpActionResult Put(int id, [FromBody] AsesoriaDocente asesoria)
@@ -685,7 +739,7 @@ namespace UcbBack.Controllers
                 thisAsesoria.Categoría = asesoria.Categoría;
                 thisAsesoria.Origen = asesoria.Origen;
                 //Estudiante
-                thisAsesoria.StudentFullName = asesoria.StudentFullName;
+                thisAsesoria.StudentFullName = asesoria.StudentFullName.ToUpper();
                 //Sobre la tutoria
                 thisAsesoria.TipoTareaId = asesoria.TipoTareaId;
                 thisAsesoria.ModalidadId = asesoria.ModalidadId;
@@ -786,4 +840,3 @@ namespace UcbBack.Controllers
 
     }
 }
-

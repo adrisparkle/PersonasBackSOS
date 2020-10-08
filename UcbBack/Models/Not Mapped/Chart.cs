@@ -10,12 +10,22 @@ namespace UcbBack.Models
 {
     public class Chart
     {
-        public string CodigoPadre { set; get; }
-        public string NombrePadre { set; get; }
-        public string CodigoDep { set; get; }
-        public string NombreDep { set; get; }
-        public string CodigoUO { set; get; }
-        public string NombreUO { set; get; }
+        public string PARENT7_ID { set; get; }
+        public string PARENT6_ID { set; get; }
+        public string PARENT5_ID { set; get; }
+        public string PARENT4_ID { set; get; }
+        public string PARENT3_ID { set; get; }
+        public string PARENT2_ID { set; get; }
+        public string Dep { get; set; }
         public string Regional { get; set; }
+        public string Cod7 { get; set; }
+        public string Cod6 { get; set; }
+        public string Cod5 { get; set; }
+        public string Cod4 { get; set; }
+        public string Cod3 { get; set; }
+        public string Cod2 { get; set; }
+        public string Cod { get; set; }
+        public int BranchesId { get; set; }
+        public int Id { get; set; }
     }
 }

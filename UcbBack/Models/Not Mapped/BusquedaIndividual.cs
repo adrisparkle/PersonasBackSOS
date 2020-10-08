@@ -14,13 +14,14 @@ namespace UcbBack.Models.Not_Mapped
         public string Id { get; set; }
         public string PeopleId { get; set; }
         public string CUNI { get; set; }
-        public string Document { get; set; }
-        public string FullName { get; set; }
-        public string Positions { get; set; }
-        public string Linkage { get; set; }
-        public string Dependency { get; set; }
-        public string Branches { get; set; }
+        public string Documento { get; set; }
+        public string Nombre { get; set; }
+        public string Posicion { get; set; }
+        public string Vinculacion { get; set; }
+        public string Dependencia { get; set; }
+        public string Regional { get; set; }
         public int BranchesId { get; set; }
         public string Status { get; set; }
+        public string Estado { get; set; }
     }
 }

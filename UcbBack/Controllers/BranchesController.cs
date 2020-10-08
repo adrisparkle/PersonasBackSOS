@@ -41,7 +41,7 @@ namespace UcbBack.Controllers
                     x.CuentaSociosRCUNI,
                     x.CuentaSociosHCUNI,
                     x.VatGroup
-                }).OrderBy(x=>x.Id);
+                }).OrderBy(x=>x.Name);
 
             var user = auth.getUser(Request);
             var res = auth.filerByRegional(brs, user,isBranchtable:true);

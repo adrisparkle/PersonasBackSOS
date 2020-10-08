@@ -109,12 +109,12 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                 var carrera = connB1.getCostCenter(B1Connection.Dimension.PlanAcademico).Cast<string>().ToList().Where(x => x.Contains(brs.Abr)).ToList();
                 bool v5 = VerifyColumnValueIn(6, carrera, comment: "Esta Carrera no existe en SAP.");
                 bool v6 = VerifyLength(8, 38);
-                bool v7 = VerifyColumnValueIn(9, new List<string> { "TG", "REL", "LEC", "REV", "PAN", "EXA", "OTR" }, comment: "No existe esta tipo de Tarea Asignada.");
+                bool v7 = VerifyColumnValueIn(9, new List<string> { "TG", "REL", "LEC", "REV", "PAN", "EXA", "OTR", "RRR", "PROF", "REC", "DDA", "MCT", "MT" }, comment: "No existe esta tipo de Tarea Asignada.");
                 bool v8 = VerifyColumnValueIn(10, new List<string> { "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
                 bool v9 = VerifyTotal();
                 bool v11 = VerifyCareer(cod:6, branch:process.BranchesId,dependency:3, sheet:1);
                 bool v10 = true;
-                foreach (var i in new List<int>() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 })
+                foreach (var i in new List<int>() { 1, 2, 3, 4, 5, 6,/* 7, */8, 9, 10, 11, 12, 13, 14 })
                 {
                     v10 = VerifyNotEmpty(i) && v10;
                 }

@@ -26,6 +26,7 @@ namespace UcbBack.Models
         public string EmailUCB { get; set; }
         public string AFP { get; set; }
         public string NUA { get; set; }
-        public int Edad { get; set; }
+        public string Edad { get; set; }
+        public string Seguro { get; set; }
     }
 }

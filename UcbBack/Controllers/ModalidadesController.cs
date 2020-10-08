@@ -19,7 +19,14 @@ namespace UcbBack.Controllers
 
         public IHttpActionResult Get()
         {
-            var modalidades = _context.Modalidades.ToList();
+            //var modalidades = _context.Modalidades.OrderBy(Name).ToList();
+            var modalidades = _context.Modalidades.Select(x =>
+                new
+                {
+                    x.Id,
+                    x.Abr,
+                    x.Modalidad
+                }).OrderBy(x => x.Abr);
             return Ok(modalidades);
         }
     }

@@ -35,7 +35,7 @@ namespace UcbBack.Logic.B1
             public static string Employee = "EMPLOYEE";
         }
 
-        private SAPbobsCOM.Company company;
+        private Company company;
         private HanaConnection HanaConn;
         private int connectionResult;
         private int errorCode = 0;
@@ -130,17 +130,18 @@ namespace UcbBack.Logic.B1
 
         private int ConnectB1()
         {
-            company = new SAPbobsCOM.Company();
+            string hola = "";
+            company = new Company();
 
 
             company.Server = ConfigurationManager.AppSettings["B1Server"];
             company.CompanyDB = ConfigurationManager.AppSettings["B1CompanyDB"];
-            company.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB;
+            company.DbServerType = BoDataServerTypes.dst_HANADB;
             company.DbUserName = ConfigurationManager.AppSettings["B1DbUserName"];
             company.DbPassword = ConfigurationManager.AppSettings["B1DbPassword"];
             company.UserName = ConfigurationManager.AppSettings["B1UserName"];
             company.Password = ConfigurationManager.AppSettings["B1Password"];
-            company.language = SAPbobsCOM.BoSuppLangs.ln_English_Gb;
+            company.language = BoSuppLangs.ln_English_Gb;
             company.UseTrusted = true;
             company.LicenseServer = ConfigurationManager.AppSettings["B1LicenseServer"];
             company.SLDServer = ConfigurationManager.AppSettings["B1SLDServer"];
@@ -152,7 +153,10 @@ namespace UcbBack.Logic.B1
             if (connectionResult != 0)
             {
                 company.GetLastError(out errorCode, out errorMessage);
+                hola = company.GetLastErrorDescription();
             }
+
+            string khe = hola;
             return connectionResult;
         }
 
@@ -1180,10 +1184,11 @@ namespace UcbBack.Logic.B1
 
                 // If process Date is null set last day of the month in proccess
                 DateTime date = process.InSAPAt == null ? DateTime.Now : process.InSAPAt.Value;
+                date = new DateTime(2020, 9, 30);
                 if (approved)
                 {
-                    SAPbobsCOM.JournalEntries businessObject =
-                        (SAPbobsCOM.JournalEntries)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes
+                    JournalEntries businessObject =
+                        (JournalEntries)company.GetBusinessObject(BoObjectTypes
                             .oJournalEntries);
 
                     // add header Journal Entrie Approved:
@@ -1194,7 +1199,6 @@ namespace UcbBack.Logic.B1
                     businessObject.TaxDate = date;
                     businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
                     businessObject.DueDate = date;
-
 
                     // add lines Journal Entrie Approved:
                     businessObject.Lines.SetCurrentLine(0);
@@ -1217,7 +1221,6 @@ namespace UcbBack.Logic.B1
                         businessObject.Lines.BPLID = Int32.Parse(process.Branches.CodigoSAP);
                         businessObject.Lines.Add();
                     }
-
                     businessObject.Add();
                     company.GetLastError(out errorCode, out errorMessage);
                     if (errorCode != 0)

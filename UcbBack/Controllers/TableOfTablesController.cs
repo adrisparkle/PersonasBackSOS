@@ -22,7 +22,7 @@ namespace UcbBack.Controllers
         [Route("api/TableOfTables/Linkage")]
         public IHttpActionResult GetLinkages()
         {
-            return Ok(getFromTableOfTables(TableOfTablesTypes.Linkage).Select(x => new { x.Id, Name = x.Value }));
+            return Ok(getFromTableOfTables(TableOfTablesTypes.Linkage).Select(x => new { x.Id, Name = x.Value }).OrderBy(x=>x.Name));
         }
 
         [HttpGet]

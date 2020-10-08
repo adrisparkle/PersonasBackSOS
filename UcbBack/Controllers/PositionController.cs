@@ -44,7 +44,7 @@ namespace UcbBack.Controllers
                     brs.Enabled
                 };
             var user = auth.getUser(Request);
-            var filtered = auth.filerByRegional(all.AsQueryable(), user).ToList().OrderBy(x=>x.Id);
+            var filtered = auth.filerByRegional(all.AsQueryable(), user).ToList().OrderBy(x=>x.Cod);
             List<dynamic> res = new List<dynamic>();
             foreach (var p in filtered)
             {

@@ -106,17 +106,22 @@ namespace UcbBack.Controllers
             {
                 query = "select \r\npe.\"Id\",\r\npe.\"CUNI\"," +
                         "\r\npe.\"Document\" as \"Documento\"," +
-                        "\r\npe.\"TypeDocument\" as \"TipoDocumento\"," +
+                        "\r\ncase when pe.\"TypeDocument\" = 'CI' then 'CARNET DE IDENTIDAD'" +
+                        "\r\nwhen pe.\"TypeDocument\" = 'CE' then 'CARNET EXTRANJERO'" +
+                        "\r\nwhen pe.\"TypeDocument\" = 'PAS' then 'PASAPORTE'" +
+                        " end as \"TipoDocumento\"," +
                         "\r\npe.\"Ext\",\r\npe.\"Names\" as \"Nombres\"," +
                         "\r\npe.\"FirstSurName\" as \"PrimerApellido\"," +
                         "\r\npe.\"SecondSurName\" as \"SegundoApellido\"," +
                         "\r\npe.\"MariedSurName\" as \"ApellidoCasada\"," +
                         "\r\npe.\"BirthDate\" as \"FechaNacimiento\"," +
-                        "\r\npe.\"Gender\" as \"Genero\"," +
+                        "\r\n case when pe.\"Gender\" = 'F' then 'FEMENINO' " +
+                        "\r\nwhen pe.\"Gender\" = 'M' then 'MASCULINO' " +
+                        " end as \"Genero\"," +
                         "\r\nYEARS_BETWEEN(TO_DATE(pe.\"BirthDate\"),current_date) as \"Edad\"," +
                         "\r\npe.\"Nationality\" as \"Nacionalidad\"," +
                         "\r\npe.\"PersonalEmail\" as \"EmailPersonal\"," +
-                        "\r\npe.\"UcbEmail\" as \"EmailUCB\",\r\npe.\"AFP\"," +
+                        "\r\npe.\"UcbEmail\" as \"EmailUCB\",\r\npe.\"AFP\", pe.\"Insurance\" \"Seguro\"," +
                         "\r\npe.\"NUA\"\r\nfrom admnalrrhh_prueba.\"People\" pe" +
                         "\r\ninner join admnalrrhh_prueba.\"LASTCONTRACTS\" lc" +
                         "\r\non lc.\"PeopleId\" = pe.\"Id\"" +
@@ -138,7 +143,9 @@ namespace UcbBack.Controllers
                     x.EmailPersonal,
                     x.EmailUCB,
                     x.AFP,
-                    x.NUA
+                    x.NUA,
+                    x.Edad,
+                    x.Seguro
                 }).ToList();
                 return Ok(rawResult);
             }
@@ -146,17 +153,22 @@ namespace UcbBack.Controllers
             {
                 query = "select \r\npe.\"Id\",\r\npe.\"CUNI\"," +
                         "\r\npe.\"Document\" as \"Documento\"," +
-                        "\r\npe.\"TypeDocument\" as \"TipoDocumento\"," +
+                        "\r\ncase when pe.\"TypeDocument\" = 'CI' then 'CARNET DE IDENTIDAD'" +
+                        "\r\nwhen pe.\"TypeDocument\" = 'CE' then 'CARNET EXTRANJERO'" +
+                        "\r\nwhen pe.\"TypeDocument\" = 'PAS' then 'PASAPORTE'" +
+                        " end as \"TipoDocumento\"," +
                         "\r\npe.\"Ext\",\r\npe.\"Names\" as \"Nombres\"," +
                         "\r\npe.\"FirstSurName\" as \"PrimerApellido\"," +
                         "\r\npe.\"SecondSurName\" as \"SegundoApellido\"," +
                         "\r\npe.\"MariedSurName\" as \"ApellidoCasada\"," +
                         "\r\npe.\"BirthDate\" as \"FechaNacimiento\"," +
-                        "\r\npe.\"Gender\" as \"Genero\"," +
+                        "\r\n case when pe.\"Gender\" = 'F' then 'FEMENINO' " +
+                        "\r\nwhen pe.\"Gender\" = 'M' then 'MASCULINO' " +
+                        " end as \"Genero\"," +
                         "\r\nYEARS_BETWEEN(TO_DATE(pe.\"BirthDate\"),current_date) as \"Edad\"," +
                         "\r\npe.\"Nationality\" as \"Nacionalidad\"," +
                         "\r\npe.\"PersonalEmail\" as \"EmailPersonal\"," +
-                        "\r\npe.\"UcbEmail\" as \"EmailUCB\",\r\npe.\"AFP\"," +
+                        "\r\npe.\"UcbEmail\" as \"EmailUCB\",\r\npe.\"AFP\", pe.\"Insurance\"  \"Seguro\"," +
                         "\r\npe.\"NUA\"\r\nfrom admnalrrhh_prueba.\"People\" pe" +
                         "\r\ninner join admnalrrhh_prueba.\"LASTCONTRACTS\" lc" +
                         "\r\non lc.\"PeopleId\" = pe.\"Id\"" +
@@ -179,7 +191,9 @@ namespace UcbBack.Controllers
                     x.EmailPersonal,
                     x.EmailUCB,
                     x.AFP,
-                    x.NUA
+                    x.NUA,
+                    x.Edad,
+                    x.Seguro
                 }).ToList();
                 return Ok(rawResult);
             }
@@ -284,9 +298,31 @@ namespace UcbBack.Controllers
             var query = "select uo.\"Id\", uo.\"Name\", uo.\"Cod\"" +
                         "\r\nfrom " + CustomSchema.Schema + ".\"OrganizationalUnit\" uo" +
                         "\r\n where uo.\"Active\" = true " +
-                        "order by uo.\"Cod\"";
+                        "order by uo.\"Name\"";
 
             var list = _context.Database.SqlQuery<FiltroBG>(query).ToList();
+            var filtered =
+                from Lc in list.ToList()
+                join branches in ubranches on Lc.BranchesId equals branches
+                select Lc;
+            return Ok(list);
+        }
+
+        //Filtro de unidad organizacional por regionales a las que el usuario tiene acceso
+        [System.Web.Http.HttpGet]
+        [System.Web.Http.Route("api/BusquedaGrupal/Regional/")]
+        public IHttpActionResult FiltrarRegional()
+        {
+
+            var user = auth.getUser(Request);
+            var brs = activeDirectory.getUserBranches(user);
+            var ubranches = brs.Select(x => x.Id).ToList();
+
+            var query = "select uo.\"Id\", uo.\"Name\", uo.\"Abr\", uo.\"Id\" \"BranchesId\"" +
+                        "\r\nfrom " + CustomSchema.Schema + ".\"Branches\" uo" +
+                        "order by uo.\"Name\"";
+
+            var list = _context.Database.SqlQuery<RegionalBG>(query).ToList();
             var filtered =
                 from Lc in list.ToList()
                 join branches in ubranches on Lc.BranchesId equals branches
@@ -309,7 +345,7 @@ namespace UcbBack.Controllers
                         "\r\non dep.\"Parent\" = uo.\"Id\"" +
                         "\r\n where dep.\"Active\" = true " +
                         "\r\ngroup by dep.\"Parent\", uo.\"Name\", uo.\"Cod\"" +
-                        "\r\norder by uo.\"Cod\"";
+                        "\r\norder by uo.\"Name\"";
 
             var list = _context.Database.SqlQuery<FiltroBG>(query).ToList();
             var filtered =
@@ -335,7 +371,7 @@ namespace UcbBack.Controllers
                         "\r\ninner join " + CustomSchema.Schema + ".\"Branches\" br" +
                         "\r\non br.\"Id\" = dep.\"BranchesId\"" +
                         "\r\n where dep.\"Active\" = true " +
-                        "\r\n order by dep.\"Cod\"";
+                        "\r\n order by dep.\"Name\"";
 
             var list = _context.Database.SqlQuery<FiltroBG>(query).ToList();
             var filtered =
@@ -364,7 +400,7 @@ namespace UcbBack.Controllers
                         "\r\ninner join " + CustomSchema.Schema + ".\"Branches\" br" +
                         "\r\non br.\"Id\" = dep.\"BranchesId\"" +
                         "\r\ngroup by dep.\"Id\", dep.\"Name\", dep.\"Cod\", br.\"Id\", \r\nbr.\"Abr\", uo.\"Id\", uo.\"Name\"" +
-                        "\r\norder by dep.\"Cod\" asc ";
+                        "\r\norder by dep.\"Name\" asc ";
 
             }
             else
@@ -536,54 +572,103 @@ namespace UcbBack.Controllers
         public IHttpActionResult Organigrama(int IdDep)
         {
 
-           // var user = auth.getUser(Request);
-            //var brs = activeDirectory.getUserBranches(user);
-            //var ubranches = brs.Select(x => x.Id).ToList();
+            var user = auth.getUser(Request);
+            var brs = activeDirectory.getUserBranches(user);
+            var ubranches = brs.Select(x => x.Id).ToList();
 
-            var query = "select parent.\"Cod\" as \"CodigoPadre\", parent.\"Name\" as " +
-                        "\"NombrePadre\",\r\ndep.\"Cod\" as \"CodigoDep\", dep.\"Name\" as " +
-                        "\"NombreDep\",\r\nou.\"Cod\" as \"CodigoUO\", ou.\"Name\" as " +
-                        "\"NombreUO\", br.\"Name\" as \"Regional\"" +
-                        "\r\nfrom "+CustomSchema.Schema+".\"Dependency\" dep" +
-                        "\r\nleft join " + CustomSchema.Schema + ".\"Dependency\" parent" +
-                        "\r\non parent.\"Id\" = dep.\"Parent\"" +
-                        "\r\nleft join " + CustomSchema.Schema + ".\"OrganizationalUnit\" ou" +
-                        "\r\non ou.\"Id\" = dep.\"OrganizationalUnitId\"" +
-                        "\r\nleft join " + CustomSchema.Schema + ".\"Branches\" br\r" +
-                        "\non br.\"Id\" = dep.\"BranchesId\"\r\nwhere dep.\"Id\" = '" +IdDep +"'";
+            var query = "select      p7.\"Name\" as parent7_id, p7.\"Cod\" \"Cod7\",\r\n\t\t   " +
+                        " p6.\"Name\" as parent6_id, p6.\"Cod\" \"Cod6\",\r\n          " +
+                        "  p5.\"Name\" as parent5_id, p5.\"Cod\" \"Cod5\",\r\n        " +
+                        "    p4.\"Name\" as parent4_id, p4.\"Cod\" \"Cod4\",\r\n         " +
+                        "   p3.\"Name\" as parent3_id, p3.\"Cod\" \"Cod3\",\r\n          " +
+                        "  p2.\"Name\" as parent2_id, p2.\"Cod\" \"Cod2\",\r\n            " +
+                        "p1.\"Name\" as \"Dep\",  p1.\"Cod\" \"Cod\",\r\n            " +
+                        "p1.\"Id\" as product_id,\r\n            " +
+                        "p1.\"BranchesId\",\r\n            " +
+                        "b.\"Name\" \"Regional\"\r\nfrom        " +
+                        "admnalrrhh.\"Dependency\" p1\r\nleft join  " +
+                        " admnalrrhh.\"Dependency\" p2 on p2.\"Id\" = p1.\"Parent\" \r\nleft join   " +
+                        "admnalrrhh.\"Dependency\" p3 on p3.\"Id\" = p2.\"Parent\" \r\nleft join   " +
+                        "admnalrrhh.\"Dependency\" p4 on p4.\"Id\" = p3.\"Parent\"  \r\nleft join   " +
+                        "admnalrrhh.\"Dependency\" p5 on p5.\"Id\" = p4.\"Parent\"  \r\nleft join   " +
+                        "admnalrrhh.\"Dependency\" p6 on p6.\"Id\" = p5.\"Parent\"\r\nleft join  " +
+                        " admnalrrhh.\"Dependency\" p7 on p7.\"Id\" = p6.\"Parent\"\r\ninner join admnalrrhh.\"Branches\" b on b.\"Id\" = p1.\"BranchesId\"\r\nwhere       " +
+                        "p1.\"Id\" =" + IdDep + "\r\n order       by 1, 2, 3, 4, 5, 6, 7;";
 
             var list = _context.Database.SqlQuery<Chart>(query).ToList();
-            string regional = "", coddep = "", nomdep = "", coduo = "", nomuo = "", codpad = "", nompad = "";
-            foreach (var aPart in list)
+            var filtered =
+                from Lc in list.ToList()
+                join branches in ubranches on Lc.BranchesId equals branches
+                select Lc;
+            //return Ok(filtered.ToList());
+
+            string parent7 = "",
+                parent6 = "",
+                parent5 = "",
+                parent4 = "",
+                parent3 = "",
+                parent2 = "",
+                parent = "",
+                regional = "";
+            foreach (var aPart in filtered)
             {
 
-                coddep = aPart.CodigoDep;
-                nomdep = aPart.NombreDep;
-                codpad = aPart.CodigoPadre;
-                nompad = aPart.NombrePadre;
-                coduo = aPart.CodigoUO;
-                nomuo = aPart.NombreUO;
+                parent7 =aPart.Cod7 + "-" + aPart.PARENT7_ID;
+                parent6 = aPart.Cod6 + "-" + aPart.PARENT6_ID;
+                parent5 = aPart.Cod5 + "-" + aPart.PARENT5_ID;
+                parent4 = aPart.Cod4 + "-" + aPart.PARENT4_ID;
+                parent3 = aPart.Cod3 + "-" + aPart.PARENT3_ID;
+                parent2 = aPart.Cod2 + "-" + aPart.PARENT2_ID;
+                parent = aPart.Cod + "-" + aPart.Dep;
                 regional = aPart.Regional;
             }
             
             var root = new MyObject()
             {
-                name =  "Regional: " + regional,
+                name = regional,
                 children = new List<MyObject>() 
                 {
                     new MyObject()
                     {
-                        name = "UO: " + coduo + "-" + nomuo,
+                        name = parent7,
                         children = new List<MyObject>() 
                         {
                             new MyObject()
                             {
-                                name = "Padre: " + codpad + "-" + nompad,
+                                name = parent6,
                                 children = new List<MyObject>() 
                                 {
                                     new MyObject()
                                     {
-                                        name = "Dependencia: " + coddep + "-" + nomdep,
+                                        name = parent5,
+                                        children = new List<MyObject>() 
+                                        {
+                                            new MyObject()
+                                            {
+                                                name = parent4,
+                                                children = new List<MyObject>() 
+                                                {
+                                                    new MyObject()
+                                                    {
+                                                        name = parent3,
+                                                        children = new List<MyObject>() 
+                                                        {
+                                                            new MyObject()
+                                                            {
+                                                                name = parent2,
+                                                                children = new List<MyObject>() 
+                                                                {
+                                                                    new MyObject()
+                                                                    {
+                                                                        name = parent,
+                                                                    }
+                                                                },
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -592,6 +677,7 @@ namespace UcbBack.Controllers
                 }
             };
             return Ok(root);
+            
         }
         //Busqueda individual Activo
         [System.Web.Http.HttpGet]
@@ -604,11 +690,11 @@ namespace UcbBack.Controllers
             var ubranches = brs.Select(x => x.Id).ToList();
 
             var query = "select\r\nlc.\"PeopleId\",\r\nlc.\"Id\",\r\nlc.\"CUNI\"," +
-                        "\r\nlc.\"Document\",\r\nlc.\"FullName\",\r\nlc.\"Positions\"," +
-                        "\r\nlc.\"Linkage\",\r\nlc.\"Dependency\",\r\nlc.\"Branches\", lc.\"BranchesId\"," +
-                        "case when lc.\"Active\" = true then 'Activo'\r\nwhen lc.\"Active\" = false then 'Inactivo'\r\nend as \"Status\"" +
+                        "\r\nlc.\"Document\" \"Documento\",\r\nlc.\"FullName\" \"Nombre\",\r\nlc.\"Positions\" \"Posicion\"," +
+                        "\r\nlc.\"Linkage\" \"Vinculacion\",\r\nlc.\"Dependency\" \"Dependencia\",\r\nlc.\"Branches\" \"Regional\", lc.\"BranchesId\"," +
+                        "case when lc.\"Active\" = true then 'Activo'\r\nwhen lc.\"Active\" = false then 'Inactivo'\r\nend as \"Status\", lc.\"StartDate\" \"FechaInicio\", lc.\"EndDate\" \"FechaFin\"" +
                         "\r\nfrom "+CustomSchema.Schema+".\"LASTCONTRACTS\" lc" +
-                        "\r\nwhere lc.\"Active\" = true";
+                        "\r\nwhere lc.\"Active\" = true order by lc.\"StartDate\" desc";
 
             var list = _context.Database.SqlQuery<BusquedaIndividual>(query).ToList();
             var filtered =
@@ -628,10 +714,11 @@ namespace UcbBack.Controllers
             var ubranches = brs.Select(x => x.Id).ToList();
 
             var query = "select\r\nlc.\"PeopleId\",\r\nlc.\"Id\",\r\nlc.\"CUNI\"," +
-                        "\r\nlc.\"Document\",\r\nlc.\"FullName\",\r\nlc.\"Positions\"," +
-                        "\r\nlc.\"Linkage\",\r\nlc.\"Dependency\",\r\nlc.\"Branches\", lc.\"BranchesId\"," +
-                        "case when lc.\"Active\" = true then 'Activo'\r\nwhen lc.\"Active\" = false then 'Inactivo'\r\nend as \"Status\"" +
-                        "\r\nfrom " + CustomSchema.Schema + ".\"LASTCONTRACTS\" lc";
+                        "\r\nlc.\"Document\" \"Documento\",\r\nlc.\"FullName\" \"Nombre\",\r\nlc.\"Positions\" \"Posicion\"," +
+                        "\r\nlc.\"Linkage\" \"Vinculacion\",\r\nlc.\"Dependency\" \"Dependencia\",\r\nlc.\"Branches\" \"Regional\", lc.\"BranchesId\"," +
+                        "case when lc.\"Active\" = true then 'Activo'\r\nwhen lc.\"Active\" = false then 'Inactivo'\r\nend as \"Status\", lc.\"StartDate\" \"FechaInicio\", lc.\"EndDate\" \"FechaFin\"" +
+                        "\r\nfrom " + CustomSchema.Schema + ".\"LASTCONTRACTS\" lc" +
+                        "\r\nfrom " + CustomSchema.Schema + ".\"LASTCONTRACTS\" lc order by lc.\"StartDate\" desc";
 
             var list = _context.Database.SqlQuery<BusquedaIndividual>(query).ToList();
             var filtered =
@@ -682,6 +769,25 @@ namespace UcbBack.Controllers
                 join branches in ubranches on Lc.BranchesId equals branches
                 select Lc;
             return Ok(filtered.ToList());
+        }
+
+        //Cargos
+        [System.Web.Http.HttpGet]
+        [System.Web.Http.Route("api/BusquedaGrupal/Posicion")]
+        public IHttpActionResult PosicionResult()
+        {
+
+            var user = auth.getUser(Request);
+            var brs = activeDirectory.getUserBranches(user);
+            var ubranches = brs.Select(x => x.Id).ToList();
+
+            var query = "select pos.\"Id\", pos.\"Name\", l.\"Cod\"" +
+                        "\r\nfrom "+CustomSchema.Schema+".\"Position\" pos" +
+                        "\r\ninner join " + CustomSchema.Schema + ".\"Level\" l" +
+                        "\r\non pos.\"LevelId\" = l.\"Id\"";
+
+            var list = _context.Database.SqlQuery<PosicionBG>(query).ToList();
+            return Ok(list);
         }
     
     }

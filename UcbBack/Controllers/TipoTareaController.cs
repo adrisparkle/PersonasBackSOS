@@ -19,7 +19,14 @@ namespace UcbBack.Controllers
 
         public IHttpActionResult Get()
         {
-            var tipoTarea = _context.TipoTarea.ToList();
+            //var tipoTarea = _context.TipoTarea.ToList();
+            var tipoTarea = _context.TipoTarea.Select(x =>
+                new
+                {
+                    x.Id,
+                    x.Abr,
+                    x.Tarea
+                }).OrderBy(x => x.Abr);
             return Ok(tipoTarea);
         }
     }
