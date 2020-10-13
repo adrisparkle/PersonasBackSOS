@@ -34,7 +34,9 @@ namespace UcbBack.Models.Not_Mapped.ViewMoldes
         public int Gestion { get; set; }
         public string Origen { get; set; }
         public string Observaciones { get; set; }
-        public decimal Deduccion { get; set; }
+        public decimal? Deduccion { get; set; }
+        public decimal? IUE { get; set; }
+        public decimal? IT { get; set; }
         public string Modalidad { get; set; }
         public string MesLiteral { get; set; }
         public string TipoTarea { get; set; }

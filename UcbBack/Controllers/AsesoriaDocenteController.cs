@@ -238,7 +238,9 @@ namespace UcbBack.Controllers
             "from " + CustomSchema.Schema + ".\"ContractDetail\" lc " +
             "inner join " + CustomSchema.Schema + ".\"FullName\" fn " +
             "on fn.\"CUNI\"=lc.\"CUNI\" " +
-            "where lc.\"Categoria\" is not null " +
+            "inner join " + CustomSchema.Schema + ".\"People\" pe " +
+            "on pe.\"CUNI\"=lc.\"CUNI\" " +
+            "where pe.\"Categoria\" is not null " +
             "and ( year(lc.\"EndDate\")*100+month(lc.\"EndDate\")>= year(current_date)*100+month(current_date) " +
             "or lc.\"EndDate\" is null)) " +
                 //aquí juntamos a las personas de ADMNALRHH con los profesores independientes, es decir que estan como socios de negocio
@@ -286,6 +288,9 @@ namespace UcbBack.Controllers
                             "\"Acta\", \"ActaFecha\" , " +
                             "\"Horas\", \"MontoHora\", " +
                             "\"TotalBruto\" , " +
+                            "\"Deduccion\" , " +
+                            "\"IUE\" , " +
+                            "\"IT\" , " +
                             "\"TotalNeto\" , " +
                             "\"Observaciones\", \"BranchesId\" " +
                         "from " +
@@ -330,6 +335,9 @@ namespace UcbBack.Controllers
                     //obtiene los resultados al pie de cada tabla, por carrera
                     query = "select " +
                             "sum(\"TotalBruto\") as \"TotalBruto\", " +
+                            "sum(\"Deduccion\") as \"Deduccion\", " +
+                            "sum(\"IUE\") as \"IUE\", " +
+                            "sum(\"IT\") as \"IT\", " +
                             "sum(\"TotalNeto\") as \"TotalNeto\", \"BranchesId\" " +
                         "from " +
                             CustomSchema.Schema + ".\"AsesoriaDocente\" a " +
@@ -360,6 +368,9 @@ namespace UcbBack.Controllers
                     Horas = x.Horas,
                     Costo_Hora = x.MontoHora,
                     Total_Bruto = x.TotalBruto,
+                    Deduccion = x.Deduccion,
+                    IUE = x.IUE,
+                    IT = x.IT,
                     Total_Neto = x.TotalNeto,
                     Observaciones = x.Observaciones
                 });
@@ -372,6 +383,9 @@ namespace UcbBack.Controllers
                 {
                     Carrera = x.Carrera,
                     Total_Bruto = x.TotalBruto,
+                    Deduccion = x.Deduccion,
+                    IUE = x.IUE,
+                    IT = x.IT,
                     Total_Neto = x.TotalNeto,
                 });
                 return Ok(filteredListResult);
@@ -381,11 +395,159 @@ namespace UcbBack.Controllers
                 var filteredListResult = auth.filerByRegional(report.AsQueryable(), user).ToList().Select(x => new
                 {
                     Total_Bruto = x.TotalBruto,
+                    Deduccion = x.Deduccion,
+                    IUE = x.IUE,
+                    IT = x.IT,
                     Total_Neto = x.TotalNeto,
                 });
                 return Ok(filteredListResult);
             }
         }
+
+        //para obtener el cuerpo del reporte PDF
+        [HttpGet]
+        [Route("api/PDFReportDocente")]
+        public IHttpActionResult PDFReportDocente([FromUri] string part)
+        {
+            string query = "";
+            var report = new List<AsesoriaDocenteViewModel>();
+            string[] data = part.Split(';');
+            string section = data[0];
+            string state = data[1];
+            string origin = data[2];
+            //query para generar todos los datos de cada docente, ordenado por carrera y docente
+            switch (section)
+            {
+                case "Body":
+                    //obtiene el cuerpo de la tabla para el PDF
+                    //join para el nombre de la carrera
+                    query = "select " +
+                            "\"TeacherFullName\", \"Categoría\", " +
+                            "m.\"Abr\" as \"Modalidad\", " +
+                            "t.\"Abr\" as \"TipoTarea\", " +
+                            "a.\"Carrera\" ||" + " ' ' " + "|| op.\"PrcName\" as \"Carrera\" " + ", \"StudentFullName\" , " +
+                            "\"Acta\", \"ActaFecha\" , " +
+                            "\"Horas\", \"MontoHora\", " +
+                            "\"TotalBruto\" , " +
+                            "\"Deduccion\" , " +
+                            "\"IUE\" , " +
+                            "\"IT\" , " +
+                            "\"TotalNeto\" , " +
+                            "\"Observaciones\", \"BranchesId\" " +
+                        "from " +
+                            CustomSchema.Schema + ".\"AsesoriaDocente\" a " +
+                        "inner join " +
+                            CustomSchema.Schema + ".\"TipoTarea\" t " +
+                            "on a.\"TipoTareaId\"=t.\"Id\" " +
+                        "inner join " +
+                            CustomSchema.Schema + ".\"Modalidades\" m " +
+                            "on a.\"ModalidadId\"=m.\"Id\" " +
+                        "inner join " +
+                            ConfigurationManager.AppSettings["B1CompanyDB"] + ".\"OPRC\" op " +
+                            "on a.\"Carrera\"= op.\"PrcCode\" " +
+                        "where " +
+                            "a.\"Estado\"='" + state + "' " +
+                            "and a.\"Origen\" like '%" + origin + "%'" +
+                            "and op.\"DimCode\" = 3 " +
+                        "order by \"TeacherFullName\",  \"Carrera\" ";
+                    report = _context.Database.SqlQuery<AsesoriaDocenteViewModel>(query).ToList();
+                    break;
+
+                case "Results":
+                    //obtiene los resultados al pie de cada tabla, por carrera
+                    query = "select " +
+                            "a.\"TeacherFullName\", " +
+                            "sum(\"TotalBruto\") as \"TotalBruto\", " +
+                            "sum(\"Deduccion\") as \"Deduccion\", " +
+                            "sum(\"IUE\") as \"IUE\", " +
+                            "sum(\"IT\") as \"IT\", " +
+                            "sum(\"TotalNeto\") as \"TotalNeto\", \"BranchesId\" " +
+                        "from " +
+                            CustomSchema.Schema + ".\"AsesoriaDocente\" a " +
+                        "inner join " +
+                            ConfigurationManager.AppSettings["B1CompanyDB"] + ".\"OPRC\" op " +
+                            "on a.\"Carrera\"= op.\"PrcCode\" " +
+                        "where " +
+                            "\"Estado\"='" + state + "' " +
+                            "and a.\"Origen\" like '%" + origin + "%'" +
+                        "group by a.\"TeacherFullName\", \"BranchesId\" " +
+                        "order by a.\"TeacherFullName\" ";
+                    report = _context.Database.SqlQuery<AsesoriaDocenteViewModel>(query).ToList();
+                    break;
+
+                case "FinalResult":
+                    //obtiene los resultados al pie de cada tabla, por carrera
+                    query = "select " +
+                            "sum(\"TotalBruto\") as \"TotalBruto\", " +
+                            "sum(\"Deduccion\") as \"Deduccion\", " +
+                            "sum(\"IUE\") as \"IUE\", " +
+                            "sum(\"IT\") as \"IT\", " +
+                            "sum(\"TotalNeto\") as \"TotalNeto\", \"BranchesId\" " +
+                        "from " +
+                            CustomSchema.Schema + ".\"AsesoriaDocente\" a " +
+                        "where " +
+                            "\"Estado\"='" + state + "' " +
+                            "and a.\"Origen\" like '%" + origin + "%'" +
+                        "group by \"BranchesId\" ";
+                    report = _context.Database.SqlQuery<AsesoriaDocenteViewModel>(query).ToList();
+                    break;
+
+                default:
+                    return BadRequest();
+            }
+            //Filtro de datos por regional
+            var user = auth.getUser(Request);
+            if (section.Equals("Body"))
+            {
+                var filteredListBody = auth.filerByRegional(report.AsQueryable(), user).ToList().Select(x => new
+                {
+                    Carrera = x.Carrera,
+                    Docente = x.TeacherFullName,
+                    Categ = x.Categoría,
+                    Modal = x.Modalidad,
+                    Tarea = x.TipoTarea,
+                    Alumno = x.StudentFullName,
+                    Acta = x.Acta,
+                    Fecha = x.ActaFecha != null ? x.ActaFecha.ToString("dd-MM-yyyy") : null,
+                    Horas = x.Horas,
+                    Costo_Hora = x.MontoHora,
+                    Total_Bruto = x.TotalBruto,
+                    Deduccion = x.Deduccion,
+                    IUE = x.IUE,
+                    IT = x.IT,
+                    Total_Neto = x.TotalNeto,
+                    Observaciones = x.Observaciones
+                });
+
+                return Ok(filteredListBody);
+            }
+            else if (section.Equals("Results"))
+            {
+                var filteredListResult = auth.filerByRegional(report.AsQueryable(), user).ToList().Select(x => new
+                {
+                    Docente = x.TeacherFullName,
+                    Total_Bruto = x.TotalBruto,
+                    Deduccion = x.Deduccion,
+                    IUE = x.IUE,
+                    IT = x.IT,
+                    Total_Neto = x.TotalNeto,
+                });
+                return Ok(filteredListResult);
+            }
+            else
+            {
+                var filteredListResult = auth.filerByRegional(report.AsQueryable(), user).ToList().Select(x => new
+                {
+                    Total_Bruto = x.TotalBruto,
+                    Deduccion = x.Deduccion,
+                    IUE = x.IUE,
+                    IT = x.IT,
+                    Total_Neto = x.TotalNeto,
+                });
+                return Ok(filteredListResult);
+            }
+        }
+
 
         //para generar el archivo PREGRADO de SALOMON
         [HttpGet]
@@ -454,30 +616,32 @@ namespace UcbBack.Controllers
                 range.Merge();
                 range.Style.Alignment.Vertical = AlignmentVerticalValues.Top;*/
                 // Título
-                ws.Cell("A1;I2").Value = "PREGRADO";
-
+                ws.Cell("A1").Value = "PREGRADO";
+                ws.Cell("A2").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                ws.Cell("A2").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                ws.Range("A1:I2").Merge();
                 //Formato Cabecera
                 ws.Cell(1, 1).Style.Font.Bold = true;
                 ws.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.FromTheme(XLThemeColor.Accent1);
                 ws.Cell(1, 1).Style.Font.FontName = "Bahnschrift SemiLight";
                 ws.Cell(1, 1).Style.Font.FontSize = 20;
                 ws.Cell(1, 1).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
-
+                
                 // Rango hoja excel
                 //1,1: es la posicion inicial; 2,header.Length: es el alto y el ancho
-                var rngTable = ws.Range(1, 1, 2, header.Length);
+                var rngTable = ws.Range(1, 1, 3, header.Length);
 
                 //Bordes para las columnas
-                var columns = ws.Range(3, 1, 2 + excelContent.Count, header.Length);
+                var columns = ws.Range(3, 1, 3 + excelContent.Count, header.Length);
                 columns.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
                 columns.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
 
 
                 //Para juntar celdas de la cabecera
-                rngTable.Row(1).Merge();
+                rngTable.Row(3);
 
                 //auxiliar: desde qué línea ponemos los nombres de columna
-                var headerPos = 2;
+                var headerPos = 3;
 
                 //Ciclo para asignar los nombres a las columnas y darles formato
                 for (int i = 0; i < header.Length; i++)
@@ -490,7 +654,7 @@ namespace UcbBack.Controllers
                 }
 
                 //Aquí hago el attachment del query a mi hoja de de excel
-                ws.Cell(3, 1).Value = filteredWithoutCol.AsEnumerable();
+                ws.Cell(4, 1).Value = filteredWithoutCol.AsEnumerable();
 
                 //Ajustar contenidos
                 ws.Columns().AdjustToContents();
@@ -544,7 +708,7 @@ namespace UcbBack.Controllers
                     "a.\"TeacherBP\" as \"Codigo_Socio\", a.\"TeacherFullName\" as \"Nombre_Socio\", " +
                     "a.\"DependencyCod\" as \"Cod_Dependencia\", 'PO' as \"PEI_PO\", " +
                     "t.\"Tarea\" as \"Nombre_del_Servicio\", a.\"Carrera\" as \"Codigo_Carrera\" ,a.\"Acta\" as \"DocumentNumber\", " +
-                    "a.\"StudentFullName\" as \"Postulante\", t.\"Type\" as \"Tipo_Tarea_Asignada\", 'CC_TEMPORAL' as \"Cuenta_Asignada\", " +
+                    "a.\"StudentFullName\" as \"Postulante\", t.\"Tarea\" as \"Tipo_Tarea_Asignada\", 'CC_TEMPORAL' as \"Cuenta_Asignada\", " +
                     "a.\"TotalBruto\" as \"Monto_Contrato\", a.\"IUE\" as \"Monto_IUE\", a.\"IT\" as \"Monto_IT\", a.\"TotalNeto\" as \"Monto_a_Pagar\",  " +
                     "a.\"Observaciones\" " +
                 "from " +
@@ -564,7 +728,7 @@ namespace UcbBack.Controllers
             var excelContent = _context.Database.SqlQuery<Serv_PregradoViewModel>(query).ToList();
 
             //Para las columnas del excel
-            string[] header = new string[]{"Codigo_Socio", "Nombre_Socio", "Cod",
+            string[] header = new string[]{"Codigo_Socio", "Nombre_Socio", "Cod_Dependencia",
                                             "PEI_PO", "Nombre_del_Servicio", "Codigo_Carrera", "Documento_Base", "Postulante",
                                             "Tipo_Tarea_Asignada", "Cuenta_Asignada",
                                             "Monto_Contrato","Monto_IUE","Monto_IT","Monto_a_Pagar", "Observaciones"};

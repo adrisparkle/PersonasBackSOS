@@ -77,7 +77,7 @@ namespace UcbBack.Controllers
                     r.FileType,
                     r.State,
                     r.SAPId,
-                    CreatedAt = r.CreatedAt.ToString("dd MMMM yyyy HH:mm")
+                    CreatedAt = r.CreatedAt.ToString("dd MMM yyyy")
                 }).ToList();
             return Ok(res2);
         }
@@ -513,6 +513,131 @@ namespace UcbBack.Controllers
             response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
             response.Content.Headers.ContentDisposition.FileName = process.Branches.Abr + "-Lote_" + process.Id + "-" + process.FileType + ".xlsx";
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.Content.Headers.ContentLength = ms.Length;
+            ms.Seek(0, SeekOrigin.Begin);
+            return response;
+        }
+
+        [HttpGet]
+        [Route("api/ServContract/GetDistributionPDF/{id}")]
+        public HttpResponseMessage GetDistributionPDF(int id)
+        {
+            HttpResponseMessage response = new HttpResponseMessage();
+
+            var process = _context.ServProcesses.Include(x => x.Branches).FirstOrDefault(p => p.Id == id);
+
+            if (process == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return response;
+            }
+            var ex = new XLWorkbook();
+            var d = new Distribution();
+            switch (process.FileType)
+            {
+                case ServProcess.Serv_FileType.Varios:
+                    var dist = _context.ServVarioses.Include(x => x.Dependency).Include(x => x.Dependency.OrganizationalUnit).
+                        Where(x => x.Serv_ProcessId == process.Id).Select(x => new
+                        {
+                            Id = x.Id,
+                            Codigo_Socio = x.CardCode,
+                            Nombre_Socio = x.CardName,
+                            Cod_Dependencia = x.Dependency.Cod,
+                            Cod_UO = x.Dependency.OrganizationalUnit.Cod,
+                            PEI_PO = x.PEI,
+                            Nombre_del_Servicio = x.ServiceName,
+                            Objeto_del_Contrato = x.ContractObjective,
+                            Cuenta_Asignada = x.AssignedAccount,
+                            Monto_Contrato = x.ContractAmount,
+                            Monto_IUE = x.IUE,
+                            Monto_IT = x.IT,
+                            Monto_a_Pagar = x.TotalAmount,
+                            Observaciones = x.Comments,
+                        }).OrderBy(x => x.Id);
+                    ex.Worksheets.Add(d.CreateDataTable(dist), "TotalDetalle");
+                    break;
+                case ServProcess.Serv_FileType.Carrera:
+                    var dist1 = _context.ServCarreras.Include(x => x.Dependency).Include(x => x.Dependency.OrganizationalUnit).
+                        Where(x => x.Serv_ProcessId == process.Id).Select(x => new
+                        {
+                            Id = x.Id,
+                            Codigo_Socio = x.CardCode,
+                            Nombre_Socio = x.CardName,
+                            Cod_Dependencia = x.Dependency.Cod,
+                            Cod_UO = x.Dependency.OrganizationalUnit.Cod,
+                            PEI_PO = x.PEI,
+                            Nombre_del_Servicio = x.ServiceName,
+                            Codigo_Carrera = x.Carrera,
+                            Documento_Base = x.DocumentNumber,
+                            Postulante = x.Student,
+                            Tipo_Tarea_Asignada = x.AssignedJob,
+                            Cuenta_Asignada = x.AssignedAccount,
+                            Monto_Contrato = x.ContractAmount,
+                            Monto_IUE = x.IUE,
+                            Monto_IT = x.IT,
+                            Monto_a_Pagar = x.TotalAmount,
+                            Observaciones = x.Comments,
+                        }).OrderBy(x => x.Id);
+                    ex.Worksheets.Add(d.CreateDataTable(dist1), "TotalDetalle");
+                    break;
+                case ServProcess.Serv_FileType.Paralelo:
+                    var dist2 = _context.ServParalelos.Include(x => x.Dependency).Include(x => x.Dependency.OrganizationalUnit).
+                        Where(x => x.Serv_ProcessId == process.Id).Select(x => new
+                        {
+                            Id = x.Id,
+                            Codigo_Socio = x.CardCode,
+                            Nombre_Socio = x.CardName,
+                            Cod_Dependencia = x.Dependency.Cod,
+                            Cod_UO = x.Dependency.OrganizationalUnit.Cod,
+                            PEI_PO = x.PEI,
+                            Nombre_del_Servicio = x.ServiceName,
+                            Periodo_Academico = x.Periodo,
+                            Sigla_Asignatura = x.Sigla,
+                            Paralelo = x.ParalelNumber,
+                            Codigo_Paralelo_SAP = x.ParalelSAP,
+                            Cuenta_Asignada = x.AssignedAccount,
+                            Monto_Contrato = x.ContractAmount,
+                            Monto_IUE = x.IUE,
+                            Monto_IT = x.IT,
+                            Monto_a_Pagar = x.TotalAmount,
+                            Observaciones = x.Comments,
+                        }).OrderBy(x => x.Id);
+
+                    ex.Worksheets.Add(d.CreateDataTable(dist2), "TotalDetalle");
+                    break;
+                case ServProcess.Serv_FileType.Proyectos:
+                    var dist3 = _context.ServProyectoses.Include(x => x.Dependency).Include(x => x.Dependency.OrganizationalUnit).
+                        Where(x => x.Serv_ProcessId == process.Id).Select(x => new
+                        {
+                            Id = x.Id,
+                            Codigo_Socio = x.CardCode,
+                            Nombre_Socio = x.CardName,
+                            Cod_Dependencia = x.Dependency.Cod,
+                            Cod_UO = x.Dependency.OrganizationalUnit.Cod,
+                            PEI_PO = x.PEI,
+                            Nombre_del_Servicio = x.ServiceName,
+                            Codigo_Proyecto_SAP = x.ProjectSAPCode,
+                            Nombre_del_Proyecto = x.ProjectSAPName,
+                            x.Version,
+                            Periodo_Academico = x.Periodo,
+                            Tipo_Tarea_Asignada = x.AssignedJob,
+                            Cuenta_Asignada = x.AssignedAccount,
+                            Monto_Contrato = x.ContractAmount,
+                            Monto_IUE = x.IUE,
+                            Monto_IT = x.IT,
+                            Monto_a_Pagar = x.TotalAmount,
+                            Observaciones = x.Comments,
+                        }).OrderBy(x => x.Id);
+                    ex.Worksheets.Add(d.CreateDataTable(dist3), "TotalDetalle");
+                    break;
+            }
+            var ms = new MemoryStream();
+            ex.SaveAs(ms);
+            response.StatusCode = HttpStatusCode.OK;
+            response.Content = new StreamContent(ms);
+            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+            response.Content.Headers.ContentDisposition.FileName = process.Branches.Abr + "-Lote_" + process.Id + "-" + process.FileType + ".xlsx";
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
             response.Content.Headers.ContentLength = ms.Length;
             ms.Seek(0, SeekOrigin.Begin);
             return response;

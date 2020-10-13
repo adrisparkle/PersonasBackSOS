@@ -1184,7 +1184,7 @@ namespace UcbBack.Logic.B1
 
                 // If process Date is null set last day of the month in proccess
                 DateTime date = process.InSAPAt == null ? DateTime.Now : process.InSAPAt.Value;
-                date = new DateTime(2020, 9, 30);
+               // date = new DateTime(2020, 9, 21);
                 if (approved)
                 {
                     JournalEntries businessObject =
