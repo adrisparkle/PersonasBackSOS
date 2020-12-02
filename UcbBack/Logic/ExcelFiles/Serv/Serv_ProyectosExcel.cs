@@ -116,7 +116,7 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                 var periodo = connB1.getCostCenter(B1Connection.Dimension.Periodo).Cast<string>().ToList();
                 bool v6 = VerifyColumnValueIn(9, periodo, comment: "Este Periodo no existe en SAP.");
                 bool v7 = VerifyColumnValueIn(10, new List<string> { "PROF", "TG", "REL", "LEC", "REV", "PAN", "OTR" }, comment: "No existe este tipo de Tarea Asignada.");
-                bool v8 = VerifyColumnValueIn(11, new List<string> { "CC_POST", "CC_EC", "CC_FC", "CC_INV", "CC_SA" }, comment: "No existe este tipo de Cuenta Asignada.");
+                bool v8 = VerifyColumnValueInWithSpace(11, new List<string> { "CC_POST", "CC_EC", "CC_FC", "CC_INV", "CC_SA" }, comment: "No existe este tipo de Cuenta Asignada.");
                 //Nueva validación para comprobar que la cuenta asignada corresponde al proyecto
                 bool v9 = true;
                 foreach (var i in new List<int>(){1,2,3,4,5  ,7  ,9,10,11,12,13,14,15})

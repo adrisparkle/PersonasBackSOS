@@ -322,6 +322,7 @@
     <Compile Include="Models\Not Mapped\ViewMoldes\DistPregradoViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_PregradoViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_ProyectosViewModel.cs" />
+    <Compile Include="Models\Not Mapped\ViewMoldes\Serv_PDF.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_ReemplazoViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_VariosViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_Voucher.cs" />

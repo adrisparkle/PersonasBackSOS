@@ -239,7 +239,63 @@ namespace UcbBack.Logic
                 return false;
             }
         }
+        public bool VerifyColumnValueInWithSpace(
+            int index,
+            List<string> list,
+            bool paintcol = true,
+            int sheet = 1,
+            string comment = "Este Valor no es permitido en esta columna.",
+            bool jaro = false,
+            string colToCompare = null,
+            string table = null,
+            string colId = null,
+            bool notin = false)
+        {
+            try
+            {
+                bool res = true;
+                IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+                var l = UsedRange.LastRow().RowNumber();
+                //se toma el número de filas que se deben revisar, sin contar la cabecera. Por eso empieza en 2
+                for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+                {
+                    var value = wb.Worksheet(sheet).Cell(i, index).Value.ToString();
+                    if (list.Exists(x => string.Equals(cleanText(x), value, StringComparison.OrdinalIgnoreCase)) ==
+                        notin)
+                    {
+                        res = false;
+                        if (paintcol)
+                        {
+                            string aux = "";
+                            if (jaro)
+                            {
+                                var similarities = hanaValidator.Similarities(
+                                    wb.Worksheet(sheet).Cell(i, index).Value.ToString(), colToCompare, table, colId,
+                                    0.9f);
+                                aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
+                            }
+                            bool fHasSpace = value.Contains(" ");
+                            if (fHasSpace)
+                            {
+                                aux = "(Probablemente la celda contenga un espacio)";
+                            }
+                            paintXY(index, i, XLColor.Red, comment + aux);
+                        }
 
+                    }
+                }
+
+                valid = valid && res;
+                if (!res)
+                    addError("Valor no valido", "Valor o valores no validos en la columna: " + index, false);
+                return res;
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+                return false;
+            }
+        }
         public string cleanText(string a)
         {
             var res = a == null

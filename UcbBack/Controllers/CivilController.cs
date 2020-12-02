@@ -54,7 +54,8 @@ namespace UcbBack.Controllers
                             " inner join " + CustomSchema.Schema + ".\"Branches\" br" +
                             " on br.\"CodigoSAP\" = crd8.\"BPLId\"" +
                             " where ocrd.\"validFor\" = \'Y\'" +
-                            " and crd8.\"DisabledBP\" = \'N\') ocrd" +
+                            " and crd8.\"DisabledBP\" = \'N\'" +
+                            " and ocrd.\"frozenFor\" = \'N\') ocrd" +
                             " on c.\"SAPId\" = ocrd.\"CardCode\"" +
                             " where ocrd.\"BranchesId\"=" + id + ";";
                 var rawresult = _context.Database.SqlQuery<Civil>(query);
@@ -91,6 +92,7 @@ namespace UcbBack.Controllers
                             " inner join " + CustomSchema.Schema + ".\"Branches\" br" +
                             " on br.\"CodigoSAP\" = crd8.\"BPLId\"" +
                             " where ocrd.\"validFor\" = \'Y\'" +
+                            " and ocrd.\"frozenFor\" = \'N\'" +
                             " and crd8.\"DisabledBP\" = \'N\') ocrd" +
                             " on c.\"SAPId\" = ocrd.\"CardCode\"" +
                             " where ocrd.\"BranchesId\" in (" + StrIds + ")"+
@@ -114,7 +116,8 @@ namespace UcbBack.Controllers
                         " inner join " + CustomSchema.Schema + ".\"Branches\" br" +
                         " on br.\"CodigoSAP\" = crd8.\"BPLId\"" +
                         " where ocrd.\"validFor\" = \'Y\'" +
-                        " and crd8.\"DisabledBP\" = \'N\') ocrd" +
+                        " and crd8.\"DisabledBP\" = \'N\'" +
+                        " and ocrd.\"frozenFor\" = \'N\') ocrd" +
                         " on c.\"SAPId\" = ocrd.\"CardCode\"" +
                         " where c.\"Id\"= " + id + ";";
             var rawresult = _context.Database.SqlQuery<Civil>(query).ToList();
@@ -135,7 +138,8 @@ namespace UcbBack.Controllers
         public IHttpActionResult findInSAP(JObject CardCode)
         {
             var user = auth.getUser(Request);
-            var BP = Civil.findBPInSAP(CardCode["CardCode"].ToString(), user,_context);
+            string cd = CardCode["CardCode"].ToString();
+            var BP = Civil.findBPInSAP(cd.ToUpper(), user,_context);
             
             if (BP == null)
                 return NotFound();

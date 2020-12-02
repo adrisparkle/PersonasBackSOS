@@ -30,7 +30,7 @@ namespace UcbBack.Controllers
                 join OU in _context.OrganizationalUnits on dependency.OrganizationalUnitId equals OU.Id
                 join parent in _context.Dependencies on dependency.ParentId equals parent.Id
                 join performance in _context.PerformanceAreas on dependency.PerformanceAreaId equals performance.Id
-                           select new { dependency.Id, dependency.Cod, dependency.Name, OrganizationalUnit = OU.Name, Parent = parent.Name, Branch = branch.Abr, BranchesId = branch.Id, 
+                           select new { dependency.Id, dependency.Cod, dependency.Name, OrganizationalUnit = OU.Name, OUCod = OU.Cod, Parent = parent.Name, ParentCod = parent.Cod, Branch = branch.Abr, BranchesId = branch.Id, 
                                dependency.Active,dependency.Academic,dependency.PerformanceAreaId, PerformanceArea = performance.Name}
                     ).OrderBy(x => x.Cod);
             var user = validator.getUser(Request);

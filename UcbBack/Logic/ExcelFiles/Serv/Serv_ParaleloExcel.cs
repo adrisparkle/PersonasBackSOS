@@ -79,7 +79,6 @@ namespace UcbBack.Logic.ExcelFiles.Serv
             data.Sigla = wb.Worksheet(sheet).Cell(row, 7).Value.ToString();
             data.ParalelNumber = wb.Worksheet(sheet).Cell(row, 8).Value.ToString();
             data.ParalelSAP = wb.Worksheet(sheet).Cell(row, 9).Value.ToString();
-
             data.AssignedAccount = wb.Worksheet(sheet).Cell(row, 10).Value.ToString();
             data.ContractAmount = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 11).Value.ToString());
             data.IUE = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 12).Value.ToString());
@@ -109,7 +108,7 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                 var periodo = connB1.getCostCenter(B1Connection.Dimension.Periodo).Cast<string>().ToList();
                 bool v5 = VerifyColumnValueIn(6, periodo, comment: "Este Periodo no existe en SAP.");
                 bool v6 = VerifyParalel(cod: 9, periodo: 6, sigla: 7, paralelo: 8, dependency: 3, branch:this.process.BranchesId);//esta dependencia debe estar en 3, no 17
-                bool v7 = VerifyColumnValueIn(10, new List<string> { "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
+                bool v7 = VerifyColumnValueInWithSpace(10, new List<string> { "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
                 bool v8 = VerifyTotal();
 
                 bool v9 = true;

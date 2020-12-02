@@ -99,7 +99,7 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                 bool v3 = VerifyColumnValueIn(4, pei, comment: "Este PEI no existe en SAP.");
                 bool v4 = VerifyLength(5, 50);
                 bool v5 = VerifyLength(6, 50);
-                bool v6 = VerifyColumnValueIn(7, new List<string> { "CC_ACADEMICA", "CC_SOCIAL", "CC_DEPORTIVA", "CC_CULTURAL", "CC_PASTORAL", "CC_OTROS", "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
+                bool v6 = VerifyColumnValueInWithSpace(7, new List<string> { "CC_ACADEMICA", "CC_SOCIAL", "CC_DEPORTIVA", "CC_CULTURAL", "CC_PASTORAL", "CC_OTROS", "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
                 bool v7 = VerifyTotal();
                 bool v8 = true;
                 foreach (var i in new List<int>() { 1,2,3,4,5,6,7,8,9,10,11})

@@ -105,7 +105,7 @@ namespace UcbBack.Controllers
                                 "on a.\"ModalidadId\"=tm.\"Id\" " +
                                 "inner join " + CustomSchema.Schema + ".\"Branches\" br " +
                                 "on a.\"BranchesId\"=br.\"Id\" ";
-            string orderBy = "order by a.\"Gestion\" desc, a.\"Mes\" desc, a.\"Carrera\" asc, a.\"TeacherCUNI\" asc ";
+            string orderBy = "order by a.\"Gestion\" desc, a.\"Mes\" desc, a.\"Id\" asc, a.\"Carrera\" asc, a.\"TeacherCUNI\" asc ";
             var rawresult = new List<AsesoriaDocenteViewModel>();
             var user = auth.getUser(Request);
 
@@ -245,12 +245,14 @@ namespace UcbBack.Controllers
             "or lc.\"EndDate\" is null)) " +
                 //aquí juntamos a las personas de ADMNALRHH con los profesores independientes, es decir que estan como socios de negocio
             "UNION ALL " +
-            "(select cv.\"SAPId\" as \"CUNI\",cv.\"FullName\", null as \"StartDate\", null as \"EndDate\", br.\"Id\" as \"BranchesId\", false as \"TipoPago\", cv.\"Categoria\" " +
-            "from " + CustomSchema.Schema + ".\"Civil\" cv " +
-            "inner join " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".CRD8 " +
-            "on cv.\"SAPId\" = crd8.\"CardCode\" " +
-            "inner join " + CustomSchema.Schema + ".\"Branches\" br " +
-            "on crd8.\"BPLId\"=br.\"CodigoSAP\") " +
+            "(select cv.\"SAPId\" as \"CUNI\",ocrd.\"CardName\" \"FullName\"," +
+            " null as \"StartDate\", null as \"EndDate\", br.\"Id\" as \"BranchesId\", " +
+            "false as \"TipoPago\", cv.\"Categoria\" " +
+            "\r\nfrom " + CustomSchema.Schema + ".\"Civil\" cv " +
+            "\r\ninner join  " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".CRD8 \r\non cv.\"SAPId\" = crd8.\"CardCode\" " +
+            "\r\ninner join  " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".OCRD ocrd\r\non cv.\"SAPId\" = ocrd.\"CardCode\" " +
+            "\r\ninner join " + CustomSchema.Schema + ".\"Branches\" br \r\non crd8.\"BPLId\"=br.\"CodigoSAP\"" +
+            "\r\nwhere ocrd.\"frozenFor\" = 'N') " +
             "order by \"FullName\" "
                 //"where oh.\"jobTitle\" like '%DOCENTE%' "
             ).ToList();
@@ -308,7 +310,7 @@ namespace UcbBack.Controllers
                             "a.\"Estado\"='" + state + "' " +
                             "and a.\"Origen\" like '%" + origin + "%'" +
                             "and op.\"DimCode\" = 3 " +
-                        "order by \"Carrera\", \"TeacherFullName\" ";
+                        "order by a.\"Id\" asc,\"Carrera\", \"TeacherFullName\" ";
                     report = _context.Database.SqlQuery<AsesoriaDocenteViewModel>(query).ToList();
                     break;
 
@@ -317,6 +319,9 @@ namespace UcbBack.Controllers
                     query = "select " +
                             "(a.\"Carrera\" ||" + " ' ' " + "|| op.\"PrcName\") as \"Carrera\", " +
                             "sum(\"TotalBruto\") as \"TotalBruto\", " +
+                            "sum(\"Deduccion\") as \"Deduccion\", " +
+                            "sum(\"IUE\") as \"IUE\", " +
+                            "sum(\"IT\") as \"IT\", " +
                             "sum(\"TotalNeto\") as \"TotalNeto\", \"BranchesId\" " +
                         "from " +
                             CustomSchema.Schema + ".\"AsesoriaDocente\" a " +
@@ -338,9 +343,12 @@ namespace UcbBack.Controllers
                             "sum(\"Deduccion\") as \"Deduccion\", " +
                             "sum(\"IUE\") as \"IUE\", " +
                             "sum(\"IT\") as \"IT\", " +
-                            "sum(\"TotalNeto\") as \"TotalNeto\", \"BranchesId\" " +
+                            "sum(\"TotalNeto\") as \"TotalNeto\", \"BranchesId\"" +
                         "from " +
                             CustomSchema.Schema + ".\"AsesoriaDocente\" a " +
+
+                            "inner join " + CustomSchema.Schema + ".\"Branches\" b " +
+                            "on b.\"Id\" = a.\"BranchesId\" " +
                         "where " +
                             "\"Estado\"='" + state + "' " +
                             "and a.\"Origen\" like '%" + origin + "%'" +
@@ -387,6 +395,7 @@ namespace UcbBack.Controllers
                     IUE = x.IUE,
                     IT = x.IT,
                     Total_Neto = x.TotalNeto,
+                    x.BranchesId
                 });
                 return Ok(filteredListResult);
             }
@@ -548,7 +557,6 @@ namespace UcbBack.Controllers
             }
         }
 
-
         //para generar el archivo PREGRADO de SALOMON
         [HttpGet]
         [Route("api/ToPregradoFile")]
@@ -596,7 +604,7 @@ namespace UcbBack.Controllers
                                         "and a.\"Origen\"='DEPEN' " +
                                     "order by a.\"Id\" desc) " +
                                  "group by \"Document\" ,\"FirstSurName\", \"SecondSurName\",  \"Names\", \"MariedSurName\", \"Carrera\" , \"CUNI\", \"Dependency\", \"BranchesId\" " +
-                                 "order by \"Carrera\" asc, \"FirstSurName\" ";
+                                 "order by \"Id\" asc,\"Carrera\" asc, \"FirstSurName\" ";
 
                 var excelContent = _context.Database.SqlQuery<DistPregradoViewModel>(query).ToList();
 
@@ -707,8 +715,8 @@ namespace UcbBack.Controllers
                 "select " +
                     "a.\"TeacherBP\" as \"Codigo_Socio\", a.\"TeacherFullName\" as \"Nombre_Socio\", " +
                     "a.\"DependencyCod\" as \"Cod_Dependencia\", 'PO' as \"PEI_PO\", " +
-                    "t.\"Tarea\" as \"Nombre_del_Servicio\", a.\"Carrera\" as \"Codigo_Carrera\" ,a.\"Acta\" as \"DocumentNumber\", " +
-                    "a.\"StudentFullName\" as \"Postulante\", t.\"Tarea\" as \"Tipo_Tarea_Asignada\", 'CC_TEMPORAL' as \"Cuenta_Asignada\", " +
+                    "'Servicios de Tutoria Relatoria en Pregrado' \"Nombre_del_Servicio\", a.\"Carrera\" as \"Codigo_Carrera\" ,a.\"Acta\" as \"Documento_Base\", " +
+                    "a.\"StudentFullName\" as \"Postulante\", t.\"Abr\" as \"Tipo_Tarea_Asignada\", 'CC_TEMPORAL' as \"Cuenta_Asignada\", " +
                     "a.\"TotalBruto\" as \"Monto_Contrato\", a.\"IUE\" as \"Monto_IUE\", a.\"IT\" as \"Monto_IT\", a.\"TotalNeto\" as \"Monto_a_Pagar\",  " +
                     "a.\"Observaciones\" " +
                 "from " +
@@ -721,9 +729,9 @@ namespace UcbBack.Controllers
                     "on a.\"BranchesId\"=br.\"Id\" " +
                 "where " +
                    "a.\"Estado\"='PRE-APROBADO' " +
-                   "and br.\"Abr\" ='" + segmento + "' " +
+                "and br.\"Abr\" ='" + segmento + "' " +
                    "and a.\"Origen\"='INDEP' " +
-                "order by a.\"Id\" desc";
+                "order by a.\"Id\" asc";
 
             var excelContent = _context.Database.SqlQuery<Serv_PregradoViewModel>(query).ToList();
 

@@ -115,7 +115,7 @@ namespace UcbBack.Controllers
                             r.FileType,
                             r.State,
                             r.SAPId,
-                            CreatedAt = r.CreatedAt.ToString("dd MMMM yyyy HH:mm")
+                            CreatedAt = r.CreatedAt.ToString("dd MMM yyyy")
                         }).ToList();
             return Ok(res2);
         }
@@ -294,7 +294,8 @@ namespace UcbBack.Controllers
                 case ServProcess.Serv_FileType.Varios:
                     query =
                         "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
-                        " sv.\"ContractObjective\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
+                        " sv.\"ContractObjective\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"," +
+                        "sv.\"ContractAmount\" as \"Credit\"" +
                         " from " + CustomSchema.Schema + ".\"Serv_Varios\" sv " +
                         " inner join " + CustomSchema.Schema + ".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
@@ -307,7 +308,8 @@ namespace UcbBack.Controllers
                 case ServProcess.Serv_FileType.Carrera:
                     query =
                         "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
-                        " sv.\"AssignedJob\"||\' \'||sv.\"Carrera\"||\' \'||sv.\"Student\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
+                        " sv.\"AssignedJob\"||\' \'||sv.\"Carrera\"||\' \'||sv.\"Student\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"," +
+                        "sv.\"ContractAmount\" as \"Credit\"" +
                         " from " + CustomSchema.Schema + ".\"Serv_Carrera\" sv " +
                         " inner join " + CustomSchema.Schema + ".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
@@ -320,7 +322,8 @@ namespace UcbBack.Controllers
                 case ServProcess.Serv_FileType.Proyectos:
                     query =
                         "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
-                        " sv.\"ProjectSAPName\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
+                        " sv.\"ProjectSAPName\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"," +
+                        "sv.\"ContractAmount\" as \"Credit\"" +
                         " from " + CustomSchema.Schema + ".\"Serv_Proyectos\" sv " +
                         " inner join " + CustomSchema.Schema + ".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
@@ -333,7 +336,8 @@ namespace UcbBack.Controllers
                 case ServProcess.Serv_FileType.Paralelo:
                     query =
                         "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
-                        " sv.\"Sigla\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
+                        " sv.\"Sigla\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"," +
+                        "sv.\"ContractAmount\" as \"Credit\"" +
                         " from " + CustomSchema.Schema + ".\"Serv_Paralelo\" sv " +
                         " inner join " + CustomSchema.Schema + ".\"Dependency\" d " +
                         " on sv.\"DependencyId\" = d.\"Id\" " +
@@ -346,10 +350,31 @@ namespace UcbBack.Controllers
             }
             if (query == null)
                 return NotFound();
+            
+            //IEnumerable<Serv_Voucher> voucher = _context.Database.SqlQuery<Serv_Voucher>(query).ToList();
 
-            IEnumerable<Serv_Voucher> voucher = _context.Database.SqlQuery<Serv_Voucher>(query).ToList();
+            var voucher = _context.Database.SqlQuery<Serv_Voucher>(query).ToList();
+            var filteredList = voucher
+                .Select(x => new
+                {
+                    x.CardName, 
+                    x.CardCode,
+                    x.OU,
+                    x.PEI,
+                    x.Carrera,
+                    x.Paralelo,
+                    x.Periodo,
+                    x.ProjectCode,
+                    x.Memo,
+                    x.LineMemo,
+                    x.Concept,
+                    x.AssignedAccount,
+                    x.Account,
+                    Debit = string.Format("{0,00}", x.Debit),
+                    Credit = string.Format("{0,00}", x.Credit)
+                }); ;
 
-            return Ok(voucher);
+            return Ok(filteredList);
         }
 
         [HttpPost]
@@ -394,133 +419,167 @@ namespace UcbBack.Controllers
 
 
         [HttpGet]
-        [Route("api/ServContract/GetDistribution/{id}")]
-        public HttpResponseMessage GetDistribution(int id)
+        [Route("api/ServContract/GetDistributionPDF/{id}")]
+        public IHttpActionResult GetDistributionPDF(int id)
         {
-            HttpResponseMessage response = new HttpResponseMessage();
+            string query = "";
+            var report = new List<Serv_PDF>();
+            var process = _context.ServProcesses.Include(x => x.Branches).FirstOrDefault(p => p.Id == id);
 
-            var process = _context.ServProcesses.Include(x=>x.Branches).FirstOrDefault(p => p.Id == id);
-
-            if (process == null)
-            {
-                response.StatusCode = HttpStatusCode.NotFound;
-                return response;
-            }
-            var ex = new XLWorkbook();
-            var d = new Distribution();
+            //query para generar todos los datos de cada docente, ordenado por carrera y docente
             switch (process.FileType)
             {
                 case ServProcess.Serv_FileType.Varios:
-                    var dist = _context.ServVarioses.Include(x=>x.Dependency).Include(x=>x.Dependency.OrganizationalUnit).
-                        Where(x => x.Serv_ProcessId == process.Id).Select(x=>new
-                    {
-                        Id = x.Id,
-                        Codigo_Socio=x.CardCode,
-                        Nombre_Socio=x.CardName,
-                        Cod_Dependencia=x.Dependency.Cod,
-                        Cod_UO = x.Dependency.OrganizationalUnit.Cod,
-                        PEI_PO=x.PEI,
-                        Nombre_del_Servicio=x.ServiceName,
-                        Objeto_del_Contrato=x.ContractObjective,
-                        Cuenta_Asignada=x.AssignedAccount,
-                        Monto_Contrato=x.ContractAmount,
-                        Monto_IUE=x.IUE,
-                        Monto_IT=x.IT,
-                        Monto_a_Pagar=x.TotalAmount,
-                        Observaciones=x.Comments,
-                    }).OrderBy(x=>x.Id);
-                    ex.Worksheets.Add(d.CreateDataTable(dist), "TotalDetalle");
+                    //obtiene el cuerpo de la tabla para el PDF
+                    //join para el nombre de la carrera
+                    query = "select\r\nsv.\"Id\",\r\nsv.\"CardCode\" \"Codigo_Socio\",\r\nsv.\"CardName\" \"Nombre_Socio\"," +
+                            "\r\ndep.\"Cod\" \"Cod_Dependencia\",\r\nou.\"Cod\" \"Cod_UO\",\r\nsv.\"PEI\" \"PEI_PO\"," +
+                            "\r\nsv.\"ServiceName\" \"Nombre_del_Servicio\",\r\nsv.\"ContractObjective\" \"Objeto_del_Contrato\"," +
+                            "\r\nsv.\"AssignedAccount\" \"Cuenta_Asignada\",\r\nsv.\"ContractAmount\" \"Monto_Contrato\"," +
+                            "\r\nsv.\"IUE\" \"Monto_IUE\",\r\nsv.\"IT\" \"Monto_IT\",\r\nsv.\"TotalAmount\" \"Monto_a_Pagar\"," +
+                            "\r\nsv.\"Comments\" \"Observaciones\"\r\n" +
+                            "from " +CustomSchema.Schema + ".\"Serv_Varios\" sv" +
+                            "\r\ninner join " +CustomSchema.Schema + ".\"Dependency\" dep\r\non dep.\"Id\" = sv.\"DependencyId\"" +
+                            "\r\ninner join " +CustomSchema.Schema + ".\"OrganizationalUnit\" ou\r\non ou.\"Id\" = dep.\"OrganizationalUnitId\"" +
+                            "\r\nwhere \"Serv_ProcessId\" = "+id+"\r\norder by sv.\"Id\"";
+                    report = _context.Database.SqlQuery<Serv_PDF>(query).ToList();
                     break;
-                case ServProcess.Serv_FileType.Carrera:
-                    var dist1 = _context.ServCarreras.Include(x => x.Dependency).Include(x => x.Dependency.OrganizationalUnit).
-                        Where(x => x.Serv_ProcessId == process.Id).Select(x=>new
-                    {
-                        Id = x.Id,
-                        Codigo_Socio = x.CardCode,
-                        Nombre_Socio = x.CardName,
-                        Cod_Dependencia = x.Dependency.Cod,
-                        Cod_UO = x.Dependency.OrganizationalUnit.Cod,
-                        PEI_PO = x.PEI,
-                        Nombre_del_Servicio = x.ServiceName,
-                        Codigo_Carrera=x.Carrera,
-                        Documento_Base=x.DocumentNumber,
-                        Postulante=x.Student,
-                        Tipo_Tarea_Asignada=x.AssignedJob,
-                        Cuenta_Asignada = x.AssignedAccount,
-                        Monto_Contrato = x.ContractAmount,
-                        Monto_IUE = x.IUE,
-                        Monto_IT = x.IT,
-                        Monto_a_Pagar = x.TotalAmount,
-                        Observaciones = x.Comments,
-                    }).OrderBy(x => x.Id);
-                    ex.Worksheets.Add(d.CreateDataTable(dist1), "TotalDetalle");
-                    break;
-                case ServProcess.Serv_FileType.Paralelo:
-                    var dist2 = _context.ServParalelos.Include(x => x.Dependency).Include(x => x.Dependency.OrganizationalUnit).
-                        Where(x => x.Serv_ProcessId == process.Id).Select(x=>new
-                    {
-                        Id = x.Id,
-                        Codigo_Socio = x.CardCode,
-                        Nombre_Socio = x.CardName,
-                        Cod_Dependencia = x.Dependency.Cod,
-                        Cod_UO = x.Dependency.OrganizationalUnit.Cod,
-                        PEI_PO = x.PEI,
-                        Nombre_del_Servicio = x.ServiceName,
-                        Periodo_Academico = x.Periodo,
-                        Sigla_Asignatura = x.Sigla,
-                        Paralelo = x.ParalelNumber,
-                        Codigo_Paralelo_SAP = x.ParalelSAP,
-                        Cuenta_Asignada = x.AssignedAccount,
-                        Monto_Contrato = x.ContractAmount,
-                        Monto_IUE = x.IUE,
-                        Monto_IT = x.IT,
-                        Monto_a_Pagar = x.TotalAmount,
-                        Observaciones = x.Comments,
-                    }).OrderBy(x => x.Id);
 
-                    ex.Worksheets.Add(d.CreateDataTable(dist2), "TotalDetalle");
+                case ServProcess.Serv_FileType.Carrera:
+                    //obtiene los resultados al pie de cada tabla, por carrera
+                    query = "select\r\nsv.\"Id\",\r\nsv.\"CardCode\" \"Codigo_Socio\",\r\nsv.\"CardName\" \"Nombre_Socio\",\r\ndep.\"Cod\" \"Cod_Dependencia\",\r\nou.\"Cod\" \"Cod_UO\",\r\nsv.\"PEI\" \"PEI_PO\",\r\nsv.\"ServiceName\" \"Nombre_del_Servicio\",\r\nsv.\"Carrera\" \"Codigo_Carrera\",\r\nsv.\"DocumentNumber\" \"Documento_Base\",\r\nsv.\"Student\" \"Postulante\",\r\nsv.\"AssignedJob\" \"Tipo_Tarea_Asignada\",\r\nsv.\"AssignedAccount\" \"Cuenta_Asignada\",\r\nsv.\"ContractAmount\" \"Monto_Contrato\",\r\nsv.\"IUE\" \"Monto_IUE\",\r\nsv.\"IT\" \"Monto_IT\",\r\nsv.\"TotalAmount\" \"Monto_a_Pagar\",\r\nsv.\"Comments\" \"Observaciones\"" +
+                            "from " +CustomSchema.Schema + ".\"Serv_Carrera\" sv" +
+                            "\r\ninner join " +CustomSchema.Schema + ".\"Dependency\" dep\r\non dep.\"Id\" = sv.\"DependencyId\"" +
+                            "\r\ninner join " +CustomSchema.Schema + ".\"OrganizationalUnit\" ou\r\non ou.\"Id\" = dep.\"OrganizationalUnitId\"" +
+                            "\r\nwhere \"Serv_ProcessId\" = "+id+"\r\norder by sv.\"Id\"";
+                    report = _context.Database.SqlQuery<Serv_PDF>(query).ToList();
+                    break;
+
+                case ServProcess.Serv_FileType.Paralelo:
+                    //obtiene los resultados al pie de cada tabla, por carrera
+                    query = "select\r\nsv.\"Id\",\r\nsv.\"CardCode\" \"Codigo_Socio\",\r\nsv.\"CardName\" \"Nombre_Socio\",\r\ndep.\"Cod\" \"Cod_Dependencia\",\r\nou.\"Cod\" \"Cod_UO\",\r\nsv.\"PEI\" \"PEI_PO\",\r\nsv.\"ServiceName\" \"Nombre_del_Servicio\",\r\nsv.\"Periodo\" \"Periodo_Academico\",\r\nsv.\"Sigla\" \"Sigla_Asignatura\",\r\nsv.\"ParalelNumber\" \"Paralelo\",\r\nsv.\"ParalelSAP\" \"Codigo_Paralelo_SAP\",\r\nsv.\"AssignedAccount\" \"Cuenta_Asignada\",\r\nsv.\"ContractAmount\" \"Monto_Contrato\",\r\nsv.\"IUE\" \"Monto_IUE\",\r\nsv.\"IT\" \"Monto_IT\",\r\nsv.\"TotalAmount\" \"Monto_a_Pagar\",\r\nsv.\"Comments\" \"Observaciones\"" +
+                            "from " +CustomSchema.Schema + ".\"Serv_Paralelo\" sv" +
+                            "\r\ninner join " +CustomSchema.Schema + ".\"Dependency\" dep\r\non dep.\"Id\" = sv.\"DependencyId\"" +
+                            "\r\ninner join " +CustomSchema.Schema + ".\"OrganizationalUnit\" ou\r\non ou.\"Id\" = dep.\"OrganizationalUnitId\"" +
+                            "\r\nwhere \"Serv_ProcessId\" = "+id+"\r\norder by sv.\"Id\"";
+                    report = _context.Database.SqlQuery<Serv_PDF>(query).ToList();
                     break;
                 case ServProcess.Serv_FileType.Proyectos:
-                    var dist3 = _context.ServProyectoses.Include(x => x.Dependency).Include(x => x.Dependency.OrganizationalUnit).
-                        Where(x => x.Serv_ProcessId == process.Id).Select(x => new
-                    {
-                        Id = x.Id,
-                        Codigo_Socio = x.CardCode,
-                        Nombre_Socio = x.CardName,
-                        Cod_Dependencia = x.Dependency.Cod,
-                        Cod_UO = x.Dependency.OrganizationalUnit.Cod,
-                        PEI_PO = x.PEI,
-                        Nombre_del_Servicio = x.ServiceName,
-                        Codigo_Proyecto_SAP=x.ProjectSAPCode,
-                        Nombre_del_Proyecto=x.ProjectSAPName,
-                        x.Version,
-                        Periodo_Academico = x.Periodo,
-                        Tipo_Tarea_Asignada = x.AssignedJob,
-                        Cuenta_Asignada = x.AssignedAccount,
-                        Monto_Contrato = x.ContractAmount,
-                        Monto_IUE = x.IUE,
-                        Monto_IT = x.IT,
-                        Monto_a_Pagar = x.TotalAmount,
-                        Observaciones = x.Comments,
-                    }).OrderBy(x => x.Id);
-                    ex.Worksheets.Add(d.CreateDataTable(dist3), "TotalDetalle");
+                    //obtiene los resultados al pie de cada tabla, por carrera
+                    query = "\r\nselect\r\nsv.\"Id\",\r\nsv.\"CardCode\" \"Codigo_Socio\",\r\nsv.\"CardName\" \"Nombre_Socio\",\r\ndep.\"Cod\" \"Cod_Dependencia\",\r\nou.\"Cod\" \"Cod_UO\",\r\nsv.\"PEI\" \"PEI_PO\",\r\nsv.\"ServiceName\" \"Nombre_del_Servicio\",\r\nsv.\"ProjectSAPCode\" \"Codigo_Proyecto_SAP\",\r\nsv.\"ProjectSAPName\" \"Nombre_del_Proyecto\",\r\nsv.\"Version\",\r\nsv.\"AssignedJob\" \"Tipo_Tarea_Asignada\",\r\nsv.\"AssignedAccount\" \"Cuenta_Asignada\",\r\nsv.\"ContractAmount\" \"Monto_Contrato\",\r\nsv.\"IUE\" \"Monto_IUE\",\r\nsv.\"IT\" \"Monto_IT\",\r\nsv.\"TotalAmount\" \"Monto_a_Pagar\",\r\nsv.\"Comments\" \"Observaciones\"" +
+                            "from " +CustomSchema.Schema + ".\"Serv_Varios\" sv" +
+                            "\r\ninner join " +CustomSchema.Schema + ".\"Dependency\" dep\r\non dep.\"Id\" = sv.\"DependencyId\"" +
+                            "\r\ninner join " +CustomSchema.Schema + ".\"OrganizationalUnit\" ou\r\non ou.\"Id\" = dep.\"OrganizationalUnitId\"" +
+                            "\r\nwhere \"Serv_ProcessId\" = "+id+"\r\norder by sv.\"Id\"";
+                    report = _context.Database.SqlQuery<Serv_PDF>(query).ToList();
                     break;
+
+                default:
+                    return BadRequest();
             }
-            var ms = new MemoryStream();
-            ex.SaveAs(ms);
-            response.StatusCode = HttpStatusCode.OK;
-            response.Content = new StreamContent(ms);
-            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-            response.Content.Headers.ContentDisposition.FileName = process.Branches.Abr + "-Lote_" + process.Id + "-" + process.FileType + ".xlsx";
-            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            response.Content.Headers.ContentLength = ms.Length;
-            ms.Seek(0, SeekOrigin.Begin);
-            return response;
+            //Filtro de datos por regional
+            var user = auth.getUser(Request);
+            if (process.FileType.Equals("VARIOS"))
+            {
+                var filteredListBody = auth.filerByRegional(report.AsQueryable(), user).ToList().Select(x => new
+                {
+                    x.Id,
+                    x.Codigo_Socio,
+                    x.Nombre_Socio,
+                    x.Cod_Dependencia,
+                    x.Cod_UO,
+                    x.PEI_PO,
+                    x.Nombre_del_Servicio,
+                    x.Objeto_del_Contrato,
+                    x.Cuenta_Asignada,
+                    x.Monto_Contrato,
+                    x.Monto_IUE,
+                    x.Monto_IT,
+                    x.Monto_a_Pagar,
+                    x.Observaciones
+                    
+                });
+
+                return Ok(filteredListBody);
+            }
+            else if (process.FileType.Equals("CARRERA"))
+            {
+                var filteredListResult = auth.filerByRegional(report.AsQueryable(), user).ToList().Select(x => new
+                {
+                    x.Id,
+                    x.Codigo_Socio,
+                    x.Nombre_Socio,
+                    x.Cod_Dependencia,
+                    x.Cod_UO,
+                    x.PEI_PO,
+                    x.Nombre_del_Servicio,
+                    x.Codigo_Carrera,
+                    x.Documento_Base,
+                    x.Postulante,
+                    x.Tipo_Tarea_Asignada,
+                    x.Cuenta_Asignada,
+                    x.Monto_Contrato,
+                    x.Monto_IUE,
+                    x.Monto_IT,
+                    x.Monto_a_Pagar,
+                    x.Observaciones
+                });
+                return Ok(filteredListResult);
+            }
+            else if (process.FileType.Equals("PARALELO"))
+            {
+                var filteredListResult = auth.filerByRegional(report.AsQueryable(), user).ToList().Select(x => new
+                {
+                    x.Id,
+                    x.Codigo_Socio,
+                    x.Nombre_Socio,
+                    x.Cod_Dependencia,
+                    x.Cod_UO,
+                    x.PEI_PO,
+                    x.Nombre_del_Servicio,
+                    x.Periodo_Academico,
+                    x.Sigla_Asignatura,
+                    x.Paralelo,
+                    x.Codigo_Paralelo_SAP,
+                    x.Cuenta_Asignada,
+                    x.Monto_Contrato,
+                    x.Monto_IUE,
+                    x.Monto_IT,
+                    x.Monto_a_Pagar,
+                    x.Observaciones
+                });
+                return Ok(filteredListResult);
+            }
+            else
+            {
+                var filteredListResult = auth.filerByRegional(report.AsQueryable(), user).ToList().Select(x => new
+                {
+                    x.Id,
+                    x.Codigo_Socio,
+                    x.Nombre_Socio,
+                    x.Cod_Dependencia,
+                    x.Cod_UO,
+                    x.PEI_PO,
+                    x.Nombre_del_Servicio,
+                    x.Codigo_Proyecto_SAP,
+                    x.Nombre_del_Proyecto,
+                    x.Version,
+                    x.Periodo_Academico,
+                    x.Tipo_Tarea_Asignada,
+                    x.Cuenta_Asignadat,
+                    x.Monto_Contrato,
+                    x.Monto_IUE,
+                    x.Monto_IT,
+                    x.Monto_a_Pagar,
+                    x.Observaciones
+                });
+                return Ok(filteredListResult);
+            }
         }
 
         [HttpGet]
-        [Route("api/ServContract/GetDistributionPDF/{id}")]
-        public HttpResponseMessage GetDistributionPDF(int id)
+        [Route("api/ServContract/GetDistribution/{id}")]
+        public HttpResponseMessage GetDistribution (int id)
         {
             HttpResponseMessage response = new HttpResponseMessage();
 

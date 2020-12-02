@@ -110,7 +110,7 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                 bool v5 = VerifyColumnValueIn(6, carrera, comment: "Esta Carrera no existe en SAP.");
                 bool v6 = VerifyLength(8, 38);
                 bool v7 = VerifyColumnValueIn(9, new List<string> { "TG", "REL", "LEC", "REV", "PAN", "EXA", "OTR", "RRR", "PROF", "REC", "DDA", "MCT", "MT" }, comment: "No existe esta tipo de Tarea Asignada.");
-                bool v8 = VerifyColumnValueIn(10, new List<string> { "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
+                bool v8 = VerifyColumnValueInWithSpace(10, new List<string> { "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
                 bool v9 = VerifyTotal();
                 bool v11 = VerifyCareer(cod:6, branch:process.BranchesId,dependency:3, sheet:1);
                 bool v10 = true;

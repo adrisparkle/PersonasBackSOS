@@ -48,6 +48,7 @@ namespace UcbBack.Models
                         " inner join " + CustomSchema.Schema + ".\"Branches\" br" +
                         " on br.\"CodigoSAP\" = crd8.\"BPLId\"" +
                         " where ocrd.\"validFor\" = 'Y'" +
+                        " and ocrd.\"frozenFor\" = 'N'" +
                         " and crd8.\"DisabledBP\" = 'N'" +
                         " and ocrd.\"CardType\" = 'S'" +
                         condicion;
